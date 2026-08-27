@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 add_definitions(-DSPDLOG_USE_STD_FORMAT)
+add_definitions(-DSPDLOG_COMPILED_LIB)
 add_definitions(-D_WIN32_WINNT=0x0A00)
 
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
@@ -54,3 +55,8 @@ target_include_directories(server_common PUBLIC
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
 
+# spdlog (compiled lib from vcpkg)
+target_link_libraries(server_common PUBLIC
+    $<$<CONFIG:Debug>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlogd.lib>
+    $<$<NOT:$<CONFIG:Debug>>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlog.lib>
+)
