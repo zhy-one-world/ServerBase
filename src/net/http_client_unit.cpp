@@ -39,7 +39,7 @@ namespace faith
 		curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYHOST, 1);
 
 		//默认为16384，会导致下载速度慢
-		curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
+		curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, (512 * 1024));
 
 		//限速，暂时不限速
 		//curl_easy_setopt(m_curl, CURLOPT_MAX_RECV_SPEED_LARGE, 100000);

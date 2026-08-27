@@ -18,8 +18,6 @@
 
 namespace faith
 {
-	namespace common
-	{
 		char * get_char(const wchar_t * val )
 		{
 			static char char_buf[1024];
@@ -133,5 +131,4 @@ namespace faith
 		{
 			return impl->GetText();
 		}
-	}
 }

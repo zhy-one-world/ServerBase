@@ -11,6 +11,7 @@
 #define _ASIO_H_
 
 #include "mem_pool.hpp"
+#include "common_ns_compat.hpp"
 
 namespace boost 
 {
@@ -31,5 +32,14 @@ namespace boost
 }
 
 #include <boost/asio.hpp>
+
+// Boost.Asio 1.87+ removed io_service; keep a compatibility alias for legacy code.
+namespace boost
+{
+	namespace asio
+	{
+		using io_service = io_context;
+	}
+}
 
 #endif

@@ -55,8 +55,8 @@ namespace faith
 		public:
 			void						start();
 		private:
-			void						handle_connect(const boost::system::error_code& err,tcp::resolver::iterator endpoint_iterator);
-			void						handle_resolve(const boost::system::error_code& err,tcp::resolver::iterator endpoint_iterator);
+			void						handle_connect(const boost::system::error_code& err);
+			void						handle_resolve(const boost::system::error_code& err,tcp::resolver::results_type results);
 			void						post_connection_handler(unsigned int conn_index,tcp_client::e_connect_info info,const xstring & msg);
 		private:
 			e_connection_state			m_connection_state;

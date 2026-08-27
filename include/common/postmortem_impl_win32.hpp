@@ -18,10 +18,7 @@
 #include "xchar.hpp"
 #include "postmortem.hpp"
 
-namespace faith 
-{
-	namespace common 
-	{
+namespace faith {
 		class postmortem_impl
 		{
 		public:
@@ -38,7 +35,6 @@ namespace faith
 			static bool				m_use_dump_callback;
 
 		};
-	}
 }
 
 #endif

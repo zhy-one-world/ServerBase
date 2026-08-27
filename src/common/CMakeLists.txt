@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 add_definitions(-DSPDLOG_USE_STD_FORMAT)
-add_definitions(-D_WIN32_WINNT=0x0601)
+add_definitions(-D_WIN32_WINNT=0x0A00)
 
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
 
@@ -46,8 +46,11 @@ set_target_properties(server_common PROPERTIES FOLDER "src")
 
 target_include_directories(server_common PUBLIC
     ${COMMON_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/include/public
+    ${CMAKE_SOURCE_DIR}/include/public/common
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/curl
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
+

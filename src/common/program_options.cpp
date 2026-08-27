@@ -1,14 +1,11 @@
 #include <boost/cstdint.hpp>
 #include <sstream>
-#include "program_options.hpp"
 #include "mlb.hpp"
 #include "iserializer.hpp"
 #include "oserializer.hpp"
 
 namespace faith
 {
-	namespace common
-	{
 //		namespace program_options
 //		{
 //			variables_map::variables_map()
@@ -140,5 +137,4 @@ namespace faith
 //				}
 //			}
 //		}
-	}
 }

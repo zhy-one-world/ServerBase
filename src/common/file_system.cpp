@@ -13,8 +13,6 @@
 // Microsoft compiler security
 namespace faith
 {
-	namespace common
-	{
 		namespace utility
 		{
 			//namespace filesystem
@@ -133,5 +131,4 @@ namespace faith
 			//	}
 			//}
 		}
-	}
 }

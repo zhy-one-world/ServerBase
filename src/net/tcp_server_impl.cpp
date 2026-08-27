@@ -102,10 +102,10 @@ namespace faith
 			char* temp = (char*)common::mem_pool::getInstance().alloc(temp_len);
 			assert(temp);
 			common::utility::_iconv_one("UCS-2LE",locale_charset(),(void*)ip.c_str(), (ip.size()+1)*sizeof(xchar), temp,temp_len);
-			addr.from_string(temp);
+			addr = boost::asio::ip::make_address_v4(temp);
 			common::mem_pool::getInstance().free(temp,temp_len);
 #else
-			addr.from_string(ip);
+			addr = boost::asio::ip::make_address_v4(ip);
 #endif
 			m_endpoint=tcp::endpoint( addr,tcp_port );
 
@@ -188,7 +188,7 @@ namespace faith
 				}
 
 				//	start listen
-				m_acceptor.listen(boost::asio::socket_base::max_connections,error);
+				m_acceptor.listen(boost::asio::socket_base::max_listen_connections,error);
 				if(error)
 				{
 					return false;

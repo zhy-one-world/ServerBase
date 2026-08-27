@@ -18,9 +18,9 @@
 
 namespace faith
 {
-	class persistence_id_generator : public hld::singleton<persistence_id_generator>
+	class persistence_id_generator : public faith::singleton<persistence_id_generator>
 	{
-		friend class hld::singleton<persistence_id_generator>;
+		friend class faith::singleton<persistence_id_generator>;
 		typedef unique_id_generator<boost::uint32_t>	id_generator;
 		typedef std::map< xstring, id_generator >		id_generator_map;
 	private:

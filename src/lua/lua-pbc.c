@@ -8,7 +8,7 @@ extern "C" {
 }
 #endif
 
-#include "src/alloc.h"
+#include "alloc.h"
 
 //#ifndef _MSC_VER
 #include <stdbool.h>
@@ -1099,7 +1099,7 @@ static const luaL_Reg reg[] = {
 	{ NULL,NULL },
 };
 
-LUALIB_API int luaopen_my_math(lua_State *L) {
+static int luaopen_my_math(lua_State *L) {
 	luaL_newlib(L, reg);
 	return 1;
 }

@@ -12,7 +12,7 @@
 #include "xchar.hpp"
 #include <tchar.h>
 #include <iostream>
-#include <atlbase.h>
+#include <windows.h>
 #include "postmortem_impl_win32.hpp"
 
 #define DUMP_TYPE_FULL		MiniDumpWithFullMemory
@@ -20,8 +20,6 @@
 
 namespace faith 
 {
-	namespace common 
-	{
 
 		static std::vector<postmortem::cb_t>	s_cbs;
 		static std::vector<xchar*>				_g_cbs_desc_;
@@ -359,9 +357,7 @@ lb_return: ;
 		void postmortem_impl::release()
 		{
 			::SetUnhandledExceptionFilter( handled_release );
-		}
-
-	}
+}
 }
 
 #endif

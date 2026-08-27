@@ -6,7 +6,6 @@
 #include "xchar.hpp"
 
 namespace faith {
-	namespace common {
 
 		class Postmortem_impl
 		{
@@ -22,8 +21,7 @@ namespace faith {
 			void release();
 		};
 
-	}// end of namespace common
-}// end of namespace faith
+	}// end of namespace faith
 
 #endif//#ifdef WIN32
 

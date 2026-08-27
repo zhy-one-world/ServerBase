@@ -14,7 +14,6 @@
 extern "C" 
 {
 #include <curl/curl.h>
-#include "../curl/curl_base64.h"
 }
 
 namespace faith

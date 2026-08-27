@@ -11,6 +11,7 @@
 #define _STRING_BUFFER_H_
 
 #include <stdlib.h>
+#include <string>
 #include <boost/cstdint.hpp>
 #include <algorithm>
 

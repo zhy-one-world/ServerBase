@@ -16,8 +16,6 @@
 
 namespace faith
 {
-	namespace common
-	{
 		namespace
 		{
 			class pool_type
@@ -253,5 +251,4 @@ namespace faith
 			}
 		}
 
-	}
 }

@@ -178,7 +178,7 @@ namespace faith
 				<< _XTEXT("-")
 				<< _XTEXT("(") << m_remote_endpoint.address() << _XTEXT(",") << m_remote_endpoint.port() << _XTEXT(")")
 				<< _XTEXT(".box");
-			m_recv_buf.omlb_run(recv_buf_logfile.str(),::faith::MM_LOGGING);
+			m_recv_buf.omlb_run(recv_buf_logfile.str(),::faith::common::MM_LOGGING);
 			m_recv_buf.init(m_option.recv_buffer_size,m_option.max_packet_size);
 #endif
 			read();

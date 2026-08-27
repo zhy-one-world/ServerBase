@@ -42,7 +42,11 @@ set_target_properties(server_net PROPERTIES FOLDER "src")
 target_include_directories(server_net PUBLIC
     ${NET_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/include/common
+    ${CMAKE_SOURCE_DIR}/include/public
+    ${CMAKE_SOURCE_DIR}/include/public/common
+    ${CMAKE_SOURCE_DIR}/include/public/net
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/net
 )
+

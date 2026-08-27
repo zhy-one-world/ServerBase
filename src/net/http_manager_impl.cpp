@@ -251,7 +251,7 @@ namespace faith
 				try
 				{
 					boost::system::error_code ec;
-					m_ioservice.run(ec);
+					m_ioservice.run();
 					//std::cout << "ec = " << ec << std::endl;
 				}
 				catch (...)
@@ -313,13 +313,13 @@ namespace faith
 			//}
 			//if(!in_recurrence_mode())
 			{
-				m_strand.post(boost::bind(&scheduler_impl::call_post,this,instance_id,handler));
+				boost::asio::post(m_strand, boost::bind(&scheduler_impl::call_post,this,instance_id,handler));
 			}			
 		}
 
 		void scheduler_impl::inner_post(post_handler_type handler)
 		{
-			m_strand.post(handler);
+			boost::asio::post(m_strand, handler);
 		}
 
 		void scheduler_impl::call_post(boost::uint32_t instance_id,post_handler_type handler)

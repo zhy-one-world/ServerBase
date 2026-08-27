@@ -26,8 +26,6 @@
 
 namespace faith
 {
-	namespace common
-	{
 		namespace utility
 		{
 			uint64_t get_tick_count()
@@ -60,5 +58,4 @@ namespace faith
 				return ret;
 			}
 		}
-	}
 }

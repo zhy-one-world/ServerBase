@@ -16,8 +16,6 @@
 
 namespace faith
 {
-	namespace common
-	{
 		namespace utility
 		{
 			boost::random::mt19937 rng(get_tick_count());
@@ -27,5 +25,4 @@ namespace faith
 				return random_len(rng);
 			}
 		}
-	}
 }

@@ -42,7 +42,11 @@ set_target_properties(server_lua PROPERTIES FOLDER "src")
 target_include_directories(server_lua PUBLIC
     ${LUA_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/include/common
+    ${CMAKE_SOURCE_DIR}/include/public
+    ${CMAKE_SOURCE_DIR}/include/public/common
+    ${CMAKE_SOURCE_DIR}/include/public/lua
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/lua
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
+

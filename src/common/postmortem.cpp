@@ -13,71 +13,63 @@
 
 namespace faith 
 {
-	namespace common 
+	postmortem::postmortem(void) : m_impl_ptr(new postmortem_impl())
 	{
-		postmortem::postmortem(void) : m_impl_ptr(new postmortem_impl())
-		{
 
-		}
+	}
 
-		postmortem::~postmortem(void)
-		{
+	postmortem::~postmortem(void)
+	{
 
-		}
+	}
 
-		bool postmortem::init( xstring dumpfile_prefix,xstring exec_afterdump, int dump_type, bool use_dump_callback )
-		{
-			return m_impl_ptr->init(dumpfile_prefix, exec_afterdump, dump_type, use_dump_callback);
-		}
+	bool postmortem::init( xstring dumpfile_prefix,xstring exec_afterdump, int dump_type, bool use_dump_callback )
+	{
+		return m_impl_ptr->init(dumpfile_prefix, exec_afterdump, dump_type, use_dump_callback);
+	}
 
-		void postmortem::release()
-		{
-			return m_impl_ptr->release();
-		}
+	void postmortem::release()
+	{
+		return m_impl_ptr->release();
+	}
 
-		void postmortem::register_extern_callback(cb_t handler, xchar * desc)
-		{
-			m_impl_ptr->register_extern_callback(handler, desc);
-		}
+	void postmortem::register_extern_callback(cb_t handler, xchar * desc)
+	{
+		m_impl_ptr->register_extern_callback(handler, desc);
 	}
 }
 
 #elif defined __GNUC__
 namespace faith 
 {
-	namespace common 
+	class postmortem_impl{};
+
+	postmortem::postmortem(void)
+		:m_impl_ptr(0)
 	{
-		class postmortem_impl{};
 
-		postmortem::postmortem(void)
-			:m_impl_ptr(0)
-		{
+	}
 
-		}
+	postmortem::~postmortem(void)
+	{
 
-		postmortem::~postmortem(void)
-		{
+	}
 
-		}
+	bool postmortem::init( xstring dumpfile_prefix,xstring exec_afterdump, int dump_type, bool use_dump_callback )
+	{
+		return true;
+	}
 
-		bool postmortem::init( xstring dumpfile_prefix,xstring exec_afterdump, int dump_type, bool use_dump_callback )
-		{
-			return true;
-		}
-
-		void postmortem::release()
-		{
-			return;
-		}
+	void postmortem::release()
+	{
+		return;
+	}
 
 
-	}// end of namespace common
 }// end of namespace faith
 #else
 
 # error "Unknown compiler, only support for msvc and gcc."
 
 #endif
-
-
 

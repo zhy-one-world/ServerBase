@@ -64,9 +64,8 @@ namespace faith
 		{
 			// Start an asynchronous resolve to translate the server and service names
 			// into a list of endpoints.
-
+			m_connection_state = e_cs_resolving;
 #if defined(FAITH_UNICODE)
-			
 			int host_len = (m_hostname.size() + 1)* 3;
 			int servicname_len = (m_servicename.size() + 1) * 3;
 			char* temp_host = (char*)common::mem_pool::getInstance().alloc(host_len);
@@ -74,31 +73,31 @@ namespace faith
 			assert(temp_host && temp_service);
 			common::utility::_iconv_one("UCS-2LE",locale_charset(),(void*)m_hostname.c_str(), m_hostname.size()*sizeof(xchar),temp_host,host_len);
 			common::utility::_iconv_one("UCS-2LE",locale_charset(),(void*)m_servicename.c_str(), m_servicename.size()*sizeof(xchar),temp_service,servicname_len);
-			tcp::resolver::query query(temp_host,temp_service);
+			std::string host_a(temp_host);
+			std::string service_a(temp_service);
 			common::mem_pool::getInstance().free(temp_service,servicname_len);
 			common::mem_pool::getInstance().free(temp_host,host_len);
-#else
-			tcp::resolver::query query(m_hostname,m_servicename);
-#endif
-			m_connection_state = e_cs_resolving;
-			m_resolver.async_resolve(query,
+			m_resolver.async_resolve(host_a, service_a,
 				m_strand.wrap(boost::bind(&tcp_client_session::handle_resolve,shared_from_this(),
 				boost::asio::placeholders::error,
-				boost::asio::placeholders::iterator)));
+				boost::asio::placeholders::results)));
+#else
+			m_resolver.async_resolve(m_hostname, m_servicename,
+				m_strand.wrap(boost::bind(&tcp_client_session::handle_resolve,shared_from_this(),
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::results)));
+#endif
 		}
 
-		void tcp_client_session::handle_resolve(const boost::system::error_code& err,tcp::resolver::iterator endpoint_iterator)
+		void tcp_client_session::handle_resolve(const boost::system::error_code& err,tcp::resolver::results_type results)
 		{
 			if (!err)
 			{
 				m_connection_handler(get_conn_index(),tcp_client::e_ci_addr_resovle_successed,_XTEXT("address resolved successfully"));
-				// Attempt a connection to the first endpoint in the list. Each endpoint
-				// will be tried until we successfully establish a connection.
 				m_connection_state = e_cs_connecting;
-				tcp::endpoint endpoint = *endpoint_iterator;
-				get_socket().async_connect(endpoint,
+				boost::asio::async_connect(get_socket(), results,
 					m_strand.wrap(boost::bind(&tcp_client_session::handle_connect,shared_from_this(),
-					boost::asio::placeholders::error, ++endpoint_iterator)));				
+					boost::asio::placeholders::error)));
 			}
 			else
 			{
@@ -107,30 +106,19 @@ namespace faith
 			}
 		}
 
-		void tcp_client_session::handle_connect(const boost::system::error_code& err,tcp::resolver::iterator endpoint_iterator)
+		void tcp_client_session::handle_connect(const boost::system::error_code& err)
 		{
 			if (!err)
 			{
 				open();
-				// The connection was successful.
 				m_connection_state = e_cs_connected;
-				m_connection_handler(get_conn_index(),tcp_client::e_ci_connection_successed,_XTEXT("connection established"));				
+				m_connection_handler(get_conn_index(),tcp_client::e_ci_connection_successed,_XTEXT("connection established"));
 			}
-			else 
-				if (endpoint_iterator != tcp::resolver::iterator())
-				{
-					// The connection failed. Try the next endpoint in the list.
-					get_socket().close();
-					tcp::endpoint endpoint = *endpoint_iterator;
-					get_socket().async_connect(endpoint,
-						m_strand.wrap(boost::bind(&tcp_client_session::handle_connect,shared_from_this(),
-						boost::asio::placeholders::error, ++endpoint_iterator)));
-				}
-				else
-				{
-					m_connection_state = e_cs_none;
-					post_connection_handler(get_conn_index(),tcp_client::e_ci_connection_failed,_asio_message(err.message()));
-				}
+			else
+			{
+				m_connection_state = e_cs_none;
+				post_connection_handler(get_conn_index(),tcp_client::e_ci_connection_failed,_asio_message(err.message()));
+			}
 		}
 
 		void tcp_client_session::post_connection_handler(unsigned int conn_index,tcp_client::e_connect_info info,const xstring  & msg)

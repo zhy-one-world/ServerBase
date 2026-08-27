@@ -56,9 +56,9 @@ namespace faith
 		__try{
 
 #	define OMP_STACKOVERFLOW_CATCH_END() \
-		}__except( ::faith::common::g_stackoverflow_except = GetExceptionInformation()	\
+		}__except( ::faith::g_stackoverflow_except = GetExceptionInformation()	\
 					, (GetExceptionCode() == EXCEPTION_STACK_OVERFLOW )					\
-						&& ::faith::common::dump_stackoverflow() ) {}
+						&& ::faith::dump_stackoverflow() ) {}
 
 #else // no implementation for other platforms
 #	define OMP_STACKOVERFLOW_CATCH_BEGIN()  

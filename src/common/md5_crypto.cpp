@@ -12,12 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
-#include "../curl/curl_md5.h"
+#include "curl/curl_md5.h"
 
 namespace faith
 {
-	namespace common
-	{
 		md5_crypto::md5_crypto()
 		{
 	
@@ -27,5 +25,4 @@ namespace faith
 		{
 			Curl_md5it(output,input);
 		}
-	}
 }
