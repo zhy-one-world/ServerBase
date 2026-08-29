@@ -20,6 +20,10 @@ namespace faith
 		{
 			boost::random::mt19937 rng(get_tick_count());
 			boost::random::uniform_int_distribution<> random_len(0, 0x7FFFFFFF);
+			void set_seed(long long seed)
+			{
+				rng.seed(static_cast<boost::random::mt19937::result_type>(seed));
+			}
 			MLB_FUNC_0(int,rand)
 			{
 				return random_len(rng);
