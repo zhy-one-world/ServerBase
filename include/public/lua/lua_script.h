@@ -49,8 +49,6 @@ namespace faith
 		{
 			typedef  void  (*func_handler)(unsigned int event_type,std::list<std::string>& params);
 			typedef	 std::map<unsigned int,std::string>		func_map;
-			typedef	 std::map<xstring,xstring>				key_value_map;
-			typedef	 std::multimap<int,key_value_map>	    table_map;
 
 		public:
 			lua_script();
@@ -143,8 +141,6 @@ namespace faith
 			*/
 			xstring							get_lua_table_item_variable(const xstring lua_table_name,int lua_item_row,const xstring lua_item_col_name);
 
-		private:
-			bool							get_lua_table_item_iterative(lua_State*	lua_state,int table_index);
 		public:
 			void							script_error(int error);
 			void							script_error(int , int);
@@ -153,7 +149,6 @@ namespace faith
 			char							m_script_name[LUA_SCRIPE_FILE_NAME];
 			lua_State*						m_lua_state;
 			func_map						m_func_map;
-			table_map						m_table_map;
 
 		};
 	}
