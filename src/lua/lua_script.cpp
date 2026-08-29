@@ -29,6 +29,11 @@ namespace faith
 			m_func_map.clear();
 		}
 
+		sol2_api::sol2_interface lua_script::sol2()
+		{
+			return sol2_api::sol2_interface(m_lua_state);
+		}
+
 		lua_script::~lua_script(void)
 		{
 			exit();
@@ -438,7 +443,8 @@ namespace faith
  			{
 				lua_pop(m_lua_state, 1);
 				return "";
-			} 
+			}
+ 
 			m_table_map.clear();
 			map_index = 0;
 			int index = lua_gettop(m_lua_state);
@@ -604,7 +610,8 @@ namespace faith
 // 				return 0;
 // 			}
 // 
-// 			return (int)lua_tointeger(m_lua_state, -1);// 		}
+// 			return (int)lua_tointeger(m_lua_state, -1);
+// 		}
 	}
 }
 

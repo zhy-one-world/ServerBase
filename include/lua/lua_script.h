@@ -15,6 +15,7 @@
 #include <list>
 #include <map>
 #include "xchar.hpp"
+#include "sol2_interface.hpp"
 
 
 extern "C"
@@ -106,6 +107,9 @@ namespace faith
 			// 返回:	bool 
 			//---------------------------------------------------------------------------
 			bool							resume();
+
+			// 返回绑定到当前 lua_State 的 sol2 接口。
+			sol2_api::sol2_interface	sol2();
 			//---------------------------------------------------------------------------
 			// 函数:	lua_script::ModifyTable
 			// 功能:	将指定名称的LuaTable置堆栈顶端，并返回顶端Index

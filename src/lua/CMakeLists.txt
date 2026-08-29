@@ -13,6 +13,14 @@ add_definitions(-DSPDLOG_USE_STD_FORMAT)
 add_definitions(-D_WIN32_WINNT=0x0601)
 
 set(LUA_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/lua)
+set(VCPKG_INCLUDE_DIR
+    ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include)
+set(SOL2_INCLUDE_DIR ${VCPKG_INCLUDE_DIR})
+
+if(NOT EXISTS "${SOL2_INCLUDE_DIR}/sol/sol.hpp")
+    message(FATAL_ERROR
+        "sol2 was not found. Install it with: vcpkg install sol2:x64-windows")
+endif()
 
 file(GLOB_RECURSE HEADER_FILES
     ${LUA_INCLUDE_DIR}/*.h
@@ -41,11 +49,12 @@ set_target_properties(server_lua PROPERTIES FOLDER "src")
 
 target_include_directories(server_lua PUBLIC
     ${LUA_INCLUDE_DIR}
+    ${SOL2_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/include/common
     ${CMAKE_SOURCE_DIR}/include/public
     ${CMAKE_SOURCE_DIR}/include/public/common
     ${CMAKE_SOURCE_DIR}/include/public/lua
-    ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include
+    ${VCPKG_INCLUDE_DIR}
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/lua
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
