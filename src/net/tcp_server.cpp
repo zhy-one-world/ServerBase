@@ -38,6 +38,23 @@ namespace faith
 		{
 		}
 
+		tcp_server::tcp_server(
+			serverstatus_handler_type status_handler,
+			onconnected_handler_type onconnected_handler,
+			onclose_handler_type onclose_handler,
+			onrecv_handler_type onrecv_handler,
+			xstring ip,int tcp_port,
+			unsigned int thread_id ) : impl_ptr(new tcp_server_impl(
+											status_handler,
+											onconnected_handler,
+											onclose_handler,
+											onrecv_handler,
+											scheduler::getInstance().get_impl()->get_ioservice(thread_id),
+											scheduler::getInstance().get_impl()->get_strand(thread_id),
+											ip,tcp_port))
+		{
+		}
+
 		tcp_server::tcp_server( 
 			serverstatus_handler_type status_handler,
 			onconnected_handler_type onconnected_handler,

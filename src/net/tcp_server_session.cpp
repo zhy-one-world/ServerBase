@@ -24,6 +24,7 @@ namespace faith
 		//
 		tcp_server_session::tcp_server_session(
 			unsigned int connindex,
+			unsigned int thread_id,
 			boost::asio::io_service &io_service,
 			recv_handler_type handler_recv,
 			tcp_session_option & option,
@@ -31,6 +32,7 @@ namespace faith
 			recv_buffer_pool_type & recv_buffer_pool
 			):
 			tcp_session<tcp_server_session>(connindex,io_service,handler_recv,option,send_buffer_pool,recv_buffer_pool)
+			,m_thread_id(thread_id)
  		{				
 		}
 

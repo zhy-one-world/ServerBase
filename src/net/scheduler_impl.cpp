@@ -26,8 +26,10 @@ namespace faith
 	{
 		scheduler_impl::scheduler_impl(void) :
 			m_id_container(scheduler_invalid_timer_index),
-			m_strand(m_ioservice)
+			m_is_running(false),
+			m_main_thread_dispatch(false)
 		{
+			initialize_contexts(1);
 			clear_data();
 		}
 
@@ -43,6 +45,64 @@ namespace faith
 			{
 				m_timer_array[i].clear_data();
 			}
+		}
+
+		namespace
+		{
+			thread_local unsigned int current_scheduler_thread_id = 0;
+		}
+
+		void scheduler_impl::initialize_contexts(unsigned int context_count)
+		{
+			while (m_io_services.size() < context_count)
+			{
+				io_service_ptr io_service(new io_service_type());
+				m_io_services.push_back(io_service);
+				m_strands.push_back(strand_ptr(new strand_type(*io_service)));
+			}
+		}
+
+		unsigned int scheduler_impl::get_current_thread_id() const
+		{
+			return current_scheduler_thread_id;
+		}
+
+		unsigned int scheduler_impl::get_thread_count() const
+		{
+			return static_cast<unsigned int>(m_io_services.size());
+		}
+
+		unsigned int scheduler_impl::get_worker_thread_start_id() const
+		{
+			return m_main_thread_dispatch ? 1 : 0;
+		}
+
+		boost::asio::io_service& scheduler_impl::get_ioservice()
+		{
+			return get_ioservice(get_current_thread_id());
+		}
+
+		boost::asio::io_service& scheduler_impl::get_ioservice(unsigned int thread_id)
+		{
+			if (thread_id >= m_io_services.size())
+			{
+				thread_id = 0;
+			}
+			return *m_io_services[thread_id];
+		}
+
+		boost::asio::io_context::strand& scheduler_impl::get_strand()
+		{
+			return get_strand(get_current_thread_id());
+		}
+
+		boost::asio::io_context::strand& scheduler_impl::get_strand(unsigned int thread_id)
+		{
+			if (thread_id >= m_strands.size())
+			{
+				thread_id = 0;
+			}
+			return *m_strands[thread_id];
 		}
 
 		void scheduler_impl::init_options()
@@ -63,7 +123,17 @@ namespace faith
 		}
 		unsigned int scheduler_impl::add_timer(unsigned int interval,timer_handler_type external_handler)
 		{
+			return add_timer(interval, get_current_thread_id(), external_handler);
+		}
+
+		unsigned int scheduler_impl::add_timer(unsigned int interval,unsigned int thread_id,timer_handler_type external_handler)
+		{
 			boost::recursive_mutex::scoped_lock	lock(m_scheduler_mutex);
+
+			if (thread_id >= m_io_services.size())
+			{
+				return scheduler_invalid_timer_index;
+			}
 
 			unsigned int index = m_id_container.get_id();
 			if(index==scheduler_invalid_timer_index)
@@ -85,18 +155,19 @@ namespace faith
 			}
 			boost::system::error_code ec;			
 
-			timer_ptr timer_ptr(new boost::asio::deadline_timer(m_ioservice));
+			timer_ptr timer_ptr(new boost::asio::deadline_timer(*m_io_services[thread_id]));
 			timer_ptr->expires_from_now(boost::posix_time::milliseconds(interval),ec);
 			if(ec)
 			{
 				m_id_container.return_id(index);
 				return scheduler_invalid_timer_index;
 			}
-			timer_ptr->async_wait(m_strand.wrap(
+			timer_ptr->async_wait(m_strands[thread_id]->wrap(
 					boost::bind(&scheduler_impl::timer_handler,this,boost::asio::placeholders::error,index,timer_ptr)));
 			
 			timer_info&	timer_info_ref = m_timer_array[empty_index];			
 			timer_info_ref.interval=interval;
+			timer_info_ref.thread_id=thread_id;
 			timer_info_ref.external_handler=external_handler;
 			timer_info_ref.ptr=timer_ptr;
 			timer_info_ref.instance_id = common::persistence_id_generator::getInstance().get_id(_XTEXT("Scheduler.Timer"));
@@ -154,11 +225,11 @@ namespace faith
 				return;
 			}
 
-			timer_info_ptr->ptr->async_wait(m_strand.wrap(
+			timer_info_ptr->ptr->async_wait(m_strands[timer_info_ptr->thread_id]->wrap(
 				boost::bind(&scheduler_impl::timer_handler,this,boost::asio::placeholders::error,index, timer_info_ptr->ptr)));
 		}
 
-		void scheduler_impl::startup()
+		void scheduler_impl::startup(bool main_thread_dispatch)
 		{
 			boost::recursive_mutex::scoped_lock	lock(m_scheduler_mutex);
 
@@ -177,16 +248,25 @@ namespace faith
 			scheduler::options::thread_num thread_num;
 			scheduler::getInstance().get_option(thread_num);
 			
-
-			m_is_running=true;
-
 			if(thread_num.value==0)
 			{
 				thread_num.value = 1;
 			}
+
+			m_main_thread_dispatch = main_thread_dispatch;
+			const unsigned int context_count = thread_num.value + (m_main_thread_dispatch ? 1 : 0);
+			initialize_contexts(context_count);
+			for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
+			{
+				(*i)->restart();
+			}
+
+			m_is_running=true;
+
 			for(unsigned int i=0;i<thread_num.value;i++ )
 			{
-				boost::shared_ptr<boost::thread> new_thread(new boost::thread( boost::bind(&scheduler_impl::thread_func,this) ));
+				const unsigned int thread_id = i + (m_main_thread_dispatch ? 1 : 0);
+				boost::shared_ptr<boost::thread> new_thread(new boost::thread( boost::bind(&scheduler_impl::thread_func,this,thread_id) ));
 				m_thread_pool.push_back(new_thread);
 			}
 		}
@@ -197,7 +277,10 @@ namespace faith
 
 			if(!m_is_running)
 			{
-				m_ioservice.stop();
+				for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
+				{
+					(*i)->stop();
+				}
 				m_thread_pool.clear();
 				return false;
 			}
@@ -208,8 +291,11 @@ namespace faith
 					return false;
 				}
 
-				//	stop service, clear all pending events
-				m_ioservice.stop();
+				//	stop services, clear all pending events
+				for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
+				{
+					(*i)->stop();
+				}
 
 				//	wait until all threads stopped
 				m_is_running=false;
@@ -238,20 +324,22 @@ namespace faith
 			}
 		}
 
-		void scheduler_impl::thread_func()
+		void scheduler_impl::thread_func(unsigned int thread_id)
 		{
 			//FAITH_STACKOVERFLOW_CATCH_BEGIN();
-			thread_func_impl();
+			current_scheduler_thread_id = thread_id;
+			thread_func_impl(thread_id);
 			//FAITH_STACKOVERFLOW_CATCH_END();
 		}
-		void scheduler_impl::thread_func_impl()
+		void scheduler_impl::thread_func_impl(unsigned int thread_id)
 		{
+			boost::asio::io_service& io_service = get_ioservice(thread_id);
 			do
 			{
 				try
 				{
 					boost::system::error_code ec;
-					m_ioservice.run();
+					io_service.run();
 					//std::cout << "ec = " << ec << std::endl;
 				}
 				catch (...)
@@ -263,12 +351,27 @@ namespace faith
 					++exception_count;					
 					if (exception_count == 1)
 					{
-						//只抛第一次发生异常处。因为如果某线程出异常了，在throw之前，后续线程继续出的异常，不是异常的源头。
+						//???????????????????????????????????throw??????????????????????????????????
 					throw;
 				}
 				}
 				boost::this_thread::sleep(boost::posix_time::milliseconds(1));
-			}while(m_is_running);
+			}while(m_is_running && !io_service.stopped());
+		}
+
+		void scheduler_impl::run_current_thread()
+		{
+			current_scheduler_thread_id = 0;
+			thread_func_impl(0);
+		}
+
+		void scheduler_impl::request_stop()
+		{
+			boost::recursive_mutex::scoped_lock lock(m_scheduler_mutex);
+			for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
+			{
+				(*i)->stop();
+			}
 		}
 
 		boost::xtime scheduler_impl::get_wakeuptime(unsigned int sleep_sec,unsigned int sleep_nsec)
@@ -302,6 +405,11 @@ namespace faith
 
 		void scheduler_impl::post(post_handler_type handler)
 		{
+			post(handler, get_current_thread_id());
+		}
+
+		void scheduler_impl::post(post_handler_type handler, unsigned int thread_id)
+		{
 			boost::uint32_t instance_id = common::persistence_id_generator::getInstance().get_id(_XTEXT("Scheduler.Post"));
 			//if(moonlightbox_enabled())
 			//{
@@ -313,13 +421,26 @@ namespace faith
 			//}
 			//if(!in_recurrence_mode())
 			{
-				boost::asio::post(m_strand, boost::bind(&scheduler_impl::call_post,this,instance_id,handler));
+				if (thread_id >= m_strands.size())
+				{
+					thread_id = 0;
+				}
+				boost::asio::post(*m_strands[thread_id], boost::bind(&scheduler_impl::call_post,this,instance_id,handler));
 			}			
 		}
 
 		void scheduler_impl::inner_post(post_handler_type handler)
 		{
-			boost::asio::post(m_strand, handler);
+			inner_post(handler, get_current_thread_id());
+		}
+
+		void scheduler_impl::inner_post(post_handler_type handler, unsigned int thread_id)
+		{
+			if (thread_id >= m_strands.size())
+			{
+				thread_id = 0;
+			}
+			boost::asio::post(*m_strands[thread_id], handler);
 		}
 
 		void scheduler_impl::call_post(boost::uint32_t instance_id,post_handler_type handler)
@@ -337,7 +458,7 @@ namespace faith
 			return ret;
 		}
 
-		/* 转化asio错误消息到unicode。 asio错误消息已近本地化 */
+		/* ???asio?????????unicode?? asio??????????????? */
 		const xchar * scheduler_impl::asio_message(const std::string & msg)
 		{
 #if defined(FAITH_UNICODE)

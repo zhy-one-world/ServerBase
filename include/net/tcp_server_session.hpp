@@ -24,6 +24,7 @@ namespace faith
 		public:			
 			tcp_server_session(
 				unsigned int connindex,
+				unsigned int thread_id,
 				boost::asio::io_service &io_service,
 				recv_handler_type handler_recv,
 				tcp_session_option & option,
@@ -33,6 +34,9 @@ namespace faith
 			~tcp_server_session();
 		public:
 			void	start();
+			unsigned int get_thread_id() const { return m_thread_id; }
+		private:
+			unsigned int m_thread_id;
 		};
 	}
 }

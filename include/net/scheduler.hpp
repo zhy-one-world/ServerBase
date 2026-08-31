@@ -70,11 +70,17 @@ namespace faith
 				return true;
 			}
 			unsigned int						add_timer(unsigned int interval,timer_handler_type handler);
+			unsigned int						add_timer(unsigned int interval,unsigned int thread_id,timer_handler_type handler);
 			void								remove_timer(int index);
 			void								post(post_handler_type handler);
+			void								post(post_handler_type handler,unsigned int thread_id);
 			void								post_raw(post_handler_type handler);
-			void								startup();
+			void								post_raw(post_handler_type handler,unsigned int thread_id);
+			void								startup(bool main_thread_dispatch = false);
 			void								shutdown();
+			void								run_current_thread();
+			void								request_stop();
+			unsigned int						get_current_thread_id() const;
 		public:
 			scheduler_impl*						get_impl()	{	return m_impl_ptr;	};
 		private:

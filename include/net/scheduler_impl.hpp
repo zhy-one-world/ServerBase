@@ -15,6 +15,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -34,11 +35,18 @@ namespace faith
 			scheduler_invalid_timer_index = scheduler::scheduler_invalid_timer_index,
 		};
 		typedef std::list<boost::shared_ptr<boost::thread> >								thread_pool;
+		typedef boost::asio::io_service													io_service_type;
+		typedef boost::asio::io_context::strand											strand_type;
+		typedef boost::shared_ptr<io_service_type>										io_service_ptr;
+		typedef boost::shared_ptr<strand_type>											strand_ptr;
+		typedef std::vector<io_service_ptr>												io_service_pool;
+		typedef std::vector<strand_ptr>													strand_pool;
 		typedef unique_id_container<unsigned int, scheduler_timer_num_limit>				index_container;
 		typedef boost::shared_ptr<boost::asio::deadline_timer>								timer_ptr;
 		struct timer_info
 		{
 			unsigned int		interval;
+			unsigned int		thread_id;
 			timer_ptr			ptr;
 			timer_handler_type	external_handler;
 			boost::uint32_t		instance_id;
@@ -62,24 +70,35 @@ namespace faith
 			void							clear_data();
 		public:
 			// ONLY for internal class use
-			inline boost::asio::io_context::strand&		get_strand()	{	return m_strand;	};
-			inline boost::asio::io_service&	get_ioservice()	{	return m_ioservice;	};
+			boost::asio::io_context::strand&			get_strand();
+			boost::asio::io_context::strand&			get_strand(unsigned int thread_id);
+			boost::asio::io_service&				get_ioservice();
+			boost::asio::io_service&				get_ioservice(unsigned int thread_id);
+			unsigned int							get_current_thread_id() const;
+			unsigned int							get_thread_count() const;
+			unsigned int							get_worker_thread_start_id() const;
 			const xchar*					asio_message(const std::string & msg);
 			void							init_options();
 			bool							set_option(const boost::any& option_item,bool init_param=false);
-			void							startup();
+			void							startup(bool main_thread_dispatch = false);
 			bool							shutdown();					
 
 			unsigned int					add_timer(unsigned int interval,timer_handler_type handler);
+			unsigned int					add_timer(unsigned int interval,unsigned int thread_id,timer_handler_type handler);
 			void							remove_timer(int index);
 			void							post(post_handler_type handler);
+			void							post(post_handler_type handler,unsigned int thread_id);
 			void							inner_post(post_handler_type handler);
+			void							inner_post(post_handler_type handler,unsigned int thread_id);
+			void							run_current_thread();
+			void							request_stop();
 		private:
+			void							initialize_contexts(unsigned int context_count);
 			timer_info*						get_timer(int index);
 			//	param:	index of timer
 			void							timer_handler(const boost::system::error_code& error,unsigned int index,timer_ptr timer);
-			void							thread_func();
-			void							thread_func_impl();
+			void							thread_func(unsigned int thread_id);
+			void							thread_func_impl(unsigned int thread_id);
 			boost::xtime					get_wakeuptime(unsigned int sleep_sec,unsigned int sleep_nsec);
 			bool							in_working_threads();
 			void							call_post(boost::uint32_t instance_id,post_handler_type handler);
@@ -88,9 +107,10 @@ namespace faith
 			//	timer's container
 			timer_info						m_timer_array[timer_count_max];
 			//	WARNING:	below 2 member's declaration-order can't be changed
-			boost::asio::io_service			m_ioservice;
-			boost::asio::io_context::strand				m_strand;
+			io_service_pool					m_io_services;
+			strand_pool						m_strands;
 			bool							m_is_running;
+			bool							m_main_thread_dispatch;
 			boost::recursive_mutex			m_scheduler_mutex;
 			thread_pool						m_thread_pool;
 			index_container					m_id_container;

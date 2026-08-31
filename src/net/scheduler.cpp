@@ -46,10 +46,10 @@ namespace faith
 			return sheduler_instance;
 		}
 
-		void scheduler::startup()
+		void scheduler::startup(bool main_thread_dispatch)
 		{
 			if (m_impl_ptr)
-				m_impl_ptr->startup();
+				m_impl_ptr->startup(main_thread_dispatch);
 		}
 
 		void scheduler::shutdown()
@@ -60,11 +60,43 @@ namespace faith
 			}		
 		}
 
+		void scheduler::run_current_thread()
+		{
+			if (m_impl_ptr)
+			{
+				m_impl_ptr->run_current_thread();
+			}
+		}
+
+		void scheduler::request_stop()
+		{
+			if (m_impl_ptr)
+			{
+				m_impl_ptr->request_stop();
+			}
+		}
+
+		unsigned int scheduler::get_current_thread_id() const
+		{
+			if (!m_impl_ptr)
+			{
+				return 0;
+			}
+			return m_impl_ptr->get_current_thread_id();
+		}
+
 		unsigned int scheduler::add_timer(unsigned int interval,timer_handler_type handler)
 		{
 			if (!m_impl_ptr)
 				return scheduler_invalid_timer_index;
 			return m_impl_ptr->add_timer(interval,handler);
+		}
+
+		unsigned int scheduler::add_timer(unsigned int interval,unsigned int thread_id,timer_handler_type handler)
+		{
+			if (!m_impl_ptr)
+				return scheduler_invalid_timer_index;
+			return m_impl_ptr->add_timer(interval,thread_id,handler);
 		}
 
 		void scheduler::remove_timer(int index)
@@ -79,10 +111,22 @@ namespace faith
 				m_impl_ptr->post(handler);
 		}
 
+		void scheduler::post(post_handler_type handler,unsigned int thread_id)
+		{
+			if (m_impl_ptr)
+				m_impl_ptr->post(handler,thread_id);
+		}
+
 		void scheduler::post_raw(post_handler_type handler)
 		{
 			if (m_impl_ptr)
 				m_impl_ptr->inner_post(handler);
+		}
+
+		void scheduler::post_raw(post_handler_type handler,unsigned int thread_id)
+		{
+			if (m_impl_ptr)
+				m_impl_ptr->inner_post(handler,thread_id);
 		}
 	}
 }

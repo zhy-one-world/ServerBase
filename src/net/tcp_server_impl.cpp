@@ -290,7 +290,7 @@ namespace faith
 			if (!error)
 			{	
 				session_ptr->start();
-				m_onconnected_handler(session_ptr->get_conn_index());
+				m_scheduler_impl.inner_post(boost::bind(m_onconnected_handler, session_ptr->get_conn_index()), session_ptr->get_thread_id());
 				m_conn_size++;
 				if (m_conn_size >= m_conn_max_size)
 				{
@@ -443,19 +443,34 @@ namespace faith
 
 			//std::cout << "tcp_server_impl::destroy_session conn_index =" << conn_index << " m_conn_size ="<< m_conn_size <<std::endl;
 			session->close();
-			session->set_data_use(false);
-			m_conn_size--;
-			m_onclose_handler(conn_index);
-			if (m_conn_size == m_conn_max_size - 1)
+			if (been_opened)
 			{
-				tcp_server_session_ptr new_session_ptr = create_session();
-				m_acceptor.async_accept(new_session_ptr->get_socket(),
-					m_strand.wrap(boost::bind(&tcp_server_impl::handle_accept, this, new_session_ptr, boost::asio::placeholders::error)));
+				m_conn_size--;
 			}
+			const bool need_accept = been_opened && m_conn_size == m_conn_max_size - 1;
+			m_scheduler_impl.inner_post(boost::bind(&tcp_server_impl::finish_session_close, this, session, need_accept), session->get_thread_id());
+
 			if (m_conn_size <= 0)
 			{
 				//m_scheduler_impl.inner_post(boost::bind(m_status_handler, tcp_server::e_ss_all_connection_closed));
 				//clear_handlers();
+			}
+		}
+
+		void tcp_server_impl::finish_session_close(tcp_server_session* session, bool need_accept)
+		{
+			if (session == nullptr)
+			{
+				return;
+			}
+			session->set_data_use(false);
+			if (m_onclose_handler)
+			{
+				m_onclose_handler(session->get_conn_index());
+			}
+			if (need_accept && m_be_listening)
+			{
+				boost::asio::post(m_strand, boost::bind(&tcp_server_impl::listen, this));
 			}
 		}
 
@@ -470,7 +485,7 @@ namespace faith
 		void tcp_server_impl::init_handlers(serverstatus_handler_type status_handler,onconnected_handler_type onconnected_handler,onclose_handler_type onclose_handler,recv_handler_type recv_handler)
 		{
 			m_status_handler = m_strand.wrap(boost::bind(call_serverstatus_handler,status_handler,m_instance_id,_1));
-			m_onconnected_handler = m_strand.wrap(boost::bind(call_onconnected_handler,onconnected_handler,m_instance_id,_1));
+			m_onconnected_handler = boost::bind(call_onconnected_handler,onconnected_handler,m_instance_id,_1);
 			m_recv_handler = boost::bind(&tcp_server_impl::call_onrecv_handler,this,recv_handler,_1,_2,_3);
 			m_onclose_handler = boost::bind(call_onclose_handler,onclose_handler,m_instance_id,_1);
 		}
@@ -488,9 +503,13 @@ namespace faith
 			m_conn_max_size = server_num;
 			m_conn_array = new tcp_server_session*[m_conn_max_size];
 			apply_options();
+			const unsigned int thread_count = m_scheduler_impl.get_thread_count();
+			const unsigned int worker_start_id = m_scheduler_impl.get_worker_thread_start_id();
+			const unsigned int worker_count = thread_count > worker_start_id ? thread_count - worker_start_id : 0;
 			for (int i = 0; i < m_conn_max_size; ++i)
 			{
-				m_conn_array[i] = new tcp_server_session(0, m_io_service, m_recv_handler,
+				const unsigned int thread_id = worker_count > 0 ? worker_start_id + (std::rand() % worker_count) : 0;
+				m_conn_array[i] = new tcp_server_session(0, thread_id, m_scheduler_impl.get_ioservice(thread_id), m_recv_handler,
 					m_session_option, *m_send_buffer_pool, *m_recv_buffer_pool);
 				m_conn_array[i]->set_conn_index(i);
 			}

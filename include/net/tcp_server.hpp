@@ -67,6 +67,14 @@ namespace faith
 				onrecv_handler_type onrecv_handler,
 				xstring ip,
 				int tcp_port );
+			explicit tcp_server(
+				serverstatus_handler_type status_handler,
+				onconnected_handler_type onconnected_handler,
+				onclose_handler_type onclose_handler,
+				onrecv_handler_type onrecv_handler,
+				xstring ip,
+				int tcp_port,
+				unsigned int thread_id );
 			explicit tcp_server( 
 				serverstatus_handler_type status_handler,
 				onconnected_handler_type onconnected_handler,

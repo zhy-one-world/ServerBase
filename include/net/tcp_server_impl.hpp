@@ -98,6 +98,7 @@ namespace faith
 			void									create_buffer_pools();
 			void									handle_accept( tcp_server_session_ptr session_ptr,const boost::system::error_code& error );
 			void									handle_session_close( unsigned int conn_index,tcp_server_session* session_ptr );	
+			void									finish_session_close(tcp_server_session* session, bool need_accept);
 			void									listen();
 			void									do_stop();
 			tcp_server_session_ptr					create_session();
@@ -134,7 +135,7 @@ namespace faith
 			tcp_session_option						m_session_option;
 			send_buffer_pool_type*					m_send_buffer_pool;
 			recv_buffer_pool_type*					m_recv_buffer_pool;			
-			scheduler_impl &						m_scheduler_impl;		// 性能优化,去除getInstance
+			scheduler_impl &						m_scheduler_impl;		// ???????,???getInstance
 		};
 	}
 }
