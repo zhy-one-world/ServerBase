@@ -19,6 +19,7 @@
 #include <boost/date_time.hpp>
 #include <boost/smart_ptr.hpp>
 #include <typeinfo>
+#include <rlog.hpp>
 
 namespace faith 
 {
@@ -27,7 +28,8 @@ namespace faith
 		scheduler_impl::scheduler_impl(void) :
 			m_id_container(scheduler_invalid_timer_index),
 			m_is_running(false),
-			m_main_thread_dispatch(false)
+			m_main_thread_dispatch(false),
+			m_stop_requested(false)
 		{
 			initialize_contexts(1);
 			clear_data();
@@ -254,7 +256,11 @@ namespace faith
 			}
 
 			m_main_thread_dispatch = main_thread_dispatch;
+			m_stop_requested = false;
 			const unsigned int context_count = thread_num.value + (m_main_thread_dispatch ? 1 : 0);
+			_RLOG_(MINFO, "scheduler startup, configured workers:" << thread_num.value
+				<< " context count:" << context_count
+				<< " main dispatch:" << m_main_thread_dispatch);
 			initialize_contexts(context_count);
 			for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
 			{
@@ -269,6 +275,7 @@ namespace faith
 				boost::shared_ptr<boost::thread> new_thread(new boost::thread( boost::bind(&scheduler_impl::thread_func,this,thread_id) ));
 				m_thread_pool.push_back(new_thread);
 			}
+			_RLOG_(MINFO, "scheduler startup completed, worker threads started:" << m_thread_pool.size());
 		}
 
 		bool scheduler_impl::shutdown()
@@ -355,8 +362,12 @@ namespace faith
 					throw;
 				}
 				}
+				if (m_is_running && !m_stop_requested && io_service.stopped())
+				{
+					io_service.restart();
+				}
 				boost::this_thread::sleep(boost::posix_time::milliseconds(1));
-			}while(m_is_running && !io_service.stopped());
+			}while(m_is_running && !m_stop_requested);
 		}
 
 		void scheduler_impl::run_current_thread()
@@ -368,6 +379,7 @@ namespace faith
 		void scheduler_impl::request_stop()
 		{
 			boost::recursive_mutex::scoped_lock lock(m_scheduler_mutex);
+			m_stop_requested = true;
 			for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
 			{
 				(*i)->stop();

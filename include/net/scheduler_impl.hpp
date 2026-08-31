@@ -111,6 +111,7 @@ namespace faith
 			strand_pool						m_strands;
 			bool							m_is_running;
 			bool							m_main_thread_dispatch;
+			bool							m_stop_requested;
 			boost::recursive_mutex			m_scheduler_mutex;
 			thread_pool						m_thread_pool;
 			index_container					m_id_container;

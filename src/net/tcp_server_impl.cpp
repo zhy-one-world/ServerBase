@@ -12,6 +12,7 @@
 #include <boost/pool/object_pool.hpp>
 #include "scheduler.hpp"
 #include "tcp_server_impl.hpp"
+#include <rlog.hpp>
 //#include "faith_logger.hpp"
 #include "mlb.hpp"
 #include "persistence_id_generator.hpp"
@@ -289,6 +290,9 @@ namespace faith
 			//std::cout << "tcp_server_impl::handle_accept conn_index = " << session_ptr->get_conn_index() << " error = " << error << " m_conn_size ="<< m_conn_size<<std::endl;
 			if (!error)
 			{	
+				_RLOG_(MINFO, "tcp server accepted socket, connindex:"
+					<< session_ptr->get_conn_index() << " session thread:"
+					<< session_ptr->get_thread_id());
 				session_ptr->start();
 				m_scheduler_impl.inner_post(boost::bind(m_onconnected_handler, session_ptr->get_conn_index()), session_ptr->get_thread_id());
 				m_conn_size++;
