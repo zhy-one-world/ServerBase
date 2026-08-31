@@ -125,6 +125,12 @@ namespace faith
 				m_impl_ptr->post(handler,thread_id);
 		}
 
+		void scheduler::post_to_thread(unsigned int thread_id, post_handler_type handler)
+		{
+			if (m_impl_ptr)
+				m_impl_ptr->post(handler,thread_id);
+		}
+
 		void scheduler::post_raw(post_handler_type handler)
 		{
 			if (m_impl_ptr)

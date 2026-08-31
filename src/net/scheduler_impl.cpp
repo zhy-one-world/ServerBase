@@ -54,6 +54,7 @@ namespace faith
 		namespace
 		{
 			thread_local unsigned int current_scheduler_thread_id = 0;
+			thread_local bool lifecycle_exclusive_active = false;
 		}
 
 		void scheduler_impl::initialize_contexts(unsigned int context_count)
@@ -237,7 +238,7 @@ namespace faith
 		{
 			boost::recursive_mutex::scoped_lock	lock(m_scheduler_mutex);
 
-			if(m_is_running)
+			if(m_is_running.load())
 				return;
 
 			using namespace common;
@@ -284,7 +285,7 @@ namespace faith
 		{
 			boost::recursive_mutex::scoped_lock	lock(m_scheduler_mutex);
 
-			if(!m_is_running)
+			if(!m_is_running.load())
 			{
 				for (io_service_pool::iterator i = m_io_services.begin(); i != m_io_services.end(); ++i)
 				{
@@ -367,12 +368,12 @@ namespace faith
 				{
 					end_worker_event();
 				}
-				if (m_is_running && !m_stop_requested && io_service.stopped())
+				if (m_is_running.load() && !m_stop_requested.load() && io_service.stopped())
 				{
 					io_service.restart();
 				}
 				boost::this_thread::sleep(boost::posix_time::milliseconds(1));
-			}while(m_is_running && !m_stop_requested);
+			}while(m_is_running.load() && !m_stop_requested.load());
 		}
 
 		void scheduler_impl::run_current_thread()
@@ -404,6 +405,15 @@ namespace faith
 
 		void scheduler_impl::run_exclusive(post_handler_type handler)
 		{
+			if (lifecycle_exclusive_active)
+			{
+				if (handler)
+				{
+					handler();
+				}
+				return;
+			}
+			lifecycle_exclusive_active = true;
 			{
 				std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
 				m_lifecycle_paused = true;
@@ -424,6 +434,7 @@ namespace faith
 					std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
 					m_lifecycle_paused = false;
 				}
+				lifecycle_exclusive_active = false;
 				m_lifecycle_condition.notify_all();
 				throw;
 			}
@@ -432,6 +443,7 @@ namespace faith
 				std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
 				m_lifecycle_paused = false;
 			}
+			lifecycle_exclusive_active = false;
 			m_lifecycle_condition.notify_all();
 		}
 
@@ -498,6 +510,11 @@ namespace faith
 				}
 				boost::asio::post(*m_strands[thread_id], boost::bind(&scheduler_impl::call_post,this,instance_id,handler));
 			}			
+		}
+
+		void scheduler_impl::post_to_thread(unsigned int thread_id, post_handler_type handler)
+		{
+			post(handler, thread_id);
 		}
 
 		void scheduler_impl::inner_post(post_handler_type handler)

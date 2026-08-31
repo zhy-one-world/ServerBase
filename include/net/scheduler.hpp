@@ -74,6 +74,7 @@ namespace faith
 			void								remove_timer(int index);
 			void								post(post_handler_type handler);
 			void								post(post_handler_type handler,unsigned int thread_id);
+			void								post_to_thread(unsigned int thread_id, post_handler_type handler);
 			void								post_raw(post_handler_type handler);
 			void								post_raw(post_handler_type handler,unsigned int thread_id);
 			void								startup(bool main_thread_dispatch = false);

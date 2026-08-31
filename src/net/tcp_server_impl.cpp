@@ -424,16 +424,15 @@ namespace faith
 		//	unsigned int , conn_index )
 		bool tcp_server_impl::close( unsigned int conn_index )
 		{
-			if (m_scheduler_impl.get_current_thread_id() != 0)
-			{
-				m_scheduler_impl.post(
-					boost::bind(&tcp_server_impl::close_on_main, this, conn_index),
-					0);
-				return true;
-			}
+			m_scheduler_impl.post(
+				boost::bind(&tcp_server_impl::close_on_main, this, conn_index),
+				0);
+			return true;
+		}
 
-			bool result = false;
-			m_scheduler_impl.run_exclusive([this, conn_index, &result]()
+		void tcp_server_impl::close_on_main(unsigned int conn_index)
+		{
+			m_scheduler_impl.run_exclusive([this, conn_index]()
 			{
 				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
 				if (conn_index >= static_cast<unsigned int>(m_conn_max_size))
@@ -444,15 +443,8 @@ namespace faith
 				if (pSession != NULL)
 				{
 					pSession->close();
-					result = true;
 				}
 			});
-			return result;
-		}
-
-		void tcp_server_impl::close_on_main(unsigned int conn_index)
-		{
-			close(conn_index);
 		}
 
 		tcp_server_session_ptr tcp_server_impl::create_session()

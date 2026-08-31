@@ -23,6 +23,7 @@
 #include "scheduler.hpp"
 #include "unique_index.hpp"
 #include "options_container.hpp"
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 
@@ -90,6 +91,7 @@ namespace faith
 			void							remove_timer(int index);
 			void							post(post_handler_type handler);
 			void							post(post_handler_type handler,unsigned int thread_id);
+			void							post_to_thread(unsigned int thread_id, post_handler_type handler);
 			void							inner_post(post_handler_type handler);
 			void							inner_post(post_handler_type handler,unsigned int thread_id);
 			void							run_current_thread();
@@ -114,9 +116,9 @@ namespace faith
 			//	WARNING:	below 2 member's declaration-order can't be changed
 			io_service_pool					m_io_services;
 			strand_pool						m_strands;
-			bool							m_is_running;
+			std::atomic<bool>				m_is_running;
 			bool							m_main_thread_dispatch;
-			bool							m_stop_requested;
+			std::atomic<bool>				m_stop_requested;
 			bool							m_lifecycle_paused;
 			unsigned int					m_worker_event_count;
 			std::mutex						m_lifecycle_mutex;
