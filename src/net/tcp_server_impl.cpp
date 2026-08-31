@@ -210,19 +210,22 @@ namespace faith
 				executed the session's close_handler ,instead of posted by service by strand.
 				So we only do some clear action at first  and then wait.
 			*/
-			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (m_be_listening)
+			m_scheduler_impl.run_exclusive([this]()
 			{
-				m_be_listening = false;
-				m_acceptor.close();
-				for (int i = 0; i < m_conn_max_size; ++i)
+				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+				if (m_be_listening)
 				{
-					if (m_conn_array[i]->been_opened())
+					m_be_listening = false;
+					m_acceptor.close();
+					for (int i = 0; i < m_conn_max_size; ++i)
 					{
-						m_conn_array[i]->close();
+						if (m_conn_array[i]->been_opened())
+						{
+							m_conn_array[i]->close();
+						}
 					}
 				}
-			}
+			});
 		}
 
 		//MLB_CLASS_FUNC_0(std::size_t,TCPServer_impl,get_conn_count)
@@ -250,7 +253,7 @@ namespace faith
 			{
 				const boost::asio::ip::tcp::endpoint& ep = pSession->get_remote_endpoint();
 
-				/* TODO: 这里假设ip地址串中不包含中文等字符 */
+				/* TODO: ???????ip????????????????????? */
 				xostringstream buf;
 				buf << ep.address().to_string().c_str();
 				ret = buf.str();
@@ -280,9 +283,19 @@ namespace faith
 			return ret;
 		}
 
-		void tcp_server_impl::handle_accept( tcp_server_session_ptr session_ptr,const boost::system::error_code& error )
+		unsigned int tcp_server_impl::get_session_thread_id( unsigned int conn_index )
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+			if (conn_index >= static_cast<unsigned int>(m_conn_max_size))
+			{
+				return 0;
+			}
+			tcp_server_session* pSession = m_conn_array[conn_index];
+			return pSession == NULL ? 0 : pSession->get_thread_id();
+		}
+
+		void tcp_server_impl::handle_accept( tcp_server_session_ptr session_ptr,const boost::system::error_code& error )
+		{
 			if (nullptr == session_ptr)
 			{
 				return;
@@ -293,9 +306,13 @@ namespace faith
 				_RLOG_(MINFO, "tcp server accepted socket, connindex:"
 					<< session_ptr->get_conn_index() << " session thread:"
 					<< session_ptr->get_thread_id());
-				session_ptr->start();
-				m_scheduler_impl.inner_post(boost::bind(m_onconnected_handler, session_ptr->get_conn_index()), session_ptr->get_thread_id());
-				m_conn_size++;
+				m_scheduler_impl.run_exclusive([this, session_ptr]()
+				{
+					session_ptr->start();
+					m_onconnected_handler(session_ptr->get_conn_index());
+				});
+				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+				++m_conn_size;
 				if (m_conn_size >= m_conn_max_size)
 				{
 					return;
@@ -407,21 +424,35 @@ namespace faith
 		//	unsigned int , conn_index )
 		bool tcp_server_impl::close( unsigned int conn_index )
 		{
-			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index < 0 || conn_index >= m_conn_max_size)
+			if (m_scheduler_impl.get_current_thread_id() != 0)
 			{
-				return false;
-			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
-			if( pSession == NULL )
-			{
-				return false;
-			}
-			else
-			{
-				pSession->close();
+				m_scheduler_impl.post(
+					boost::bind(&tcp_server_impl::close_on_main, this, conn_index),
+					0);
 				return true;
 			}
+
+			bool result = false;
+			m_scheduler_impl.run_exclusive([this, conn_index, &result]()
+			{
+				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+				if (conn_index >= static_cast<unsigned int>(m_conn_max_size))
+				{
+					return;
+				}
+				tcp_server_session* pSession = m_conn_array[conn_index];
+				if (pSession != NULL)
+				{
+					pSession->close();
+					result = true;
+				}
+			});
+			return result;
+		}
+
+		void tcp_server_impl::close_on_main(unsigned int conn_index)
+		{
+			close(conn_index);
 		}
 
 		tcp_server_session_ptr tcp_server_impl::create_session()
@@ -441,24 +472,25 @@ namespace faith
 
 		void tcp_server_impl::destroy_session(tcp_server_session * session)
 		{
-			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			unsigned conn_index = session->get_conn_index();
-			bool been_opened = session->been_opened();
-
-			//std::cout << "tcp_server_impl::destroy_session conn_index =" << conn_index << " m_conn_size ="<< m_conn_size <<std::endl;
-			session->close();
-			if (been_opened)
+			if (session == nullptr)
 			{
-				m_conn_size--;
+				return;
 			}
-			const bool need_accept = been_opened && m_conn_size == m_conn_max_size - 1;
-			m_scheduler_impl.inner_post(boost::bind(&tcp_server_impl::finish_session_close, this, session, need_accept), session->get_thread_id());
 
-			if (m_conn_size <= 0)
+			m_scheduler_impl.run_exclusive([this, session]()
 			{
-				//m_scheduler_impl.inner_post(boost::bind(m_status_handler, tcp_server::e_ss_all_connection_closed));
-				//clear_handlers();
-			}
+				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+				bool been_opened = session->been_opened();
+
+				session->close();
+				if (been_opened)
+				{
+					--m_conn_size;
+				}
+				const bool need_accept =
+					been_opened && m_conn_size == m_conn_max_size - 1;
+				finish_session_close(session, need_accept);
+			});
 		}
 
 		void tcp_server_impl::finish_session_close(tcp_server_session* session, bool need_accept)

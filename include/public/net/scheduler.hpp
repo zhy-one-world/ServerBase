@@ -79,6 +79,7 @@ namespace faith
 			void								startup(bool main_thread_dispatch = false);
 			void								shutdown();
 			void								run_current_thread();
+			void								run_exclusive(post_handler_type handler);
 			void								request_stop();
 			unsigned int						get_current_thread_id() const;
 		public:

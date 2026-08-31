@@ -81,6 +81,7 @@ namespace faith
 			std::size_t								get_conn_count( void );
 			xstring									get_ip_addr( unsigned int conn_index );
 			unsigned short							get_ip_port( unsigned int conn_index );
+			unsigned int							get_session_thread_id( unsigned int conn_index );
 			bool									start( void );
 			void									stop( bool wait_until_finished = false );
 			int										send( unsigned int conn_index,const void *data_ptr,size_t data_len );
@@ -99,6 +100,7 @@ namespace faith
 			void									handle_accept( tcp_server_session_ptr session_ptr,const boost::system::error_code& error );
 			void									handle_session_close( unsigned int conn_index,tcp_server_session* session_ptr );	
 			void									finish_session_close(tcp_server_session* session, bool need_accept);
+			void									close_on_main(unsigned int conn_index);
 			void									listen();
 			void									do_stop();
 			tcp_server_session_ptr					create_session();

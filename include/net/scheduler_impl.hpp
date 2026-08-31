@@ -23,6 +23,8 @@
 #include "scheduler.hpp"
 #include "unique_index.hpp"
 #include "options_container.hpp"
+#include <condition_variable>
+#include <mutex>
 
 namespace faith 
 {
@@ -91,6 +93,7 @@ namespace faith
 			void							inner_post(post_handler_type handler);
 			void							inner_post(post_handler_type handler,unsigned int thread_id);
 			void							run_current_thread();
+			void							run_exclusive(post_handler_type handler);
 			void							request_stop();
 		private:
 			void							initialize_contexts(unsigned int context_count);
@@ -98,7 +101,9 @@ namespace faith
 			//	param:	index of timer
 			void							timer_handler(const boost::system::error_code& error,unsigned int index,timer_ptr timer);
 			void							thread_func(unsigned int thread_id);
-			void							thread_func_impl(unsigned int thread_id);
+			void							thread_func_impl(unsigned int thread_id, bool is_worker);
+			void							begin_worker_event();
+			void							end_worker_event();
 			boost::xtime					get_wakeuptime(unsigned int sleep_sec,unsigned int sleep_nsec);
 			bool							in_working_threads();
 			void							call_post(boost::uint32_t instance_id,post_handler_type handler);
@@ -112,6 +117,10 @@ namespace faith
 			bool							m_is_running;
 			bool							m_main_thread_dispatch;
 			bool							m_stop_requested;
+			bool							m_lifecycle_paused;
+			unsigned int					m_worker_event_count;
+			std::mutex						m_lifecycle_mutex;
+			std::condition_variable			m_lifecycle_condition;
 			boost::recursive_mutex			m_scheduler_mutex;
 			thread_pool						m_thread_pool;
 			index_container					m_id_container;

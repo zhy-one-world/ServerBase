@@ -86,6 +86,7 @@ namespace faith
 			std::size_t							get_conn_count( void );
 			xstring								get_ip_addr( unsigned int conn_index );
 			unsigned short						get_ip_port( unsigned int conn_index );
+			unsigned int						get_session_thread_id( unsigned int conn_index );
 			bool								start( void );
 			void								stop( bool wait_until_finished = false );
 			int									send( unsigned int conn_index,const void *data_ptr,size_t data_len );

@@ -99,6 +99,11 @@ namespace faith
 			return impl_ptr->get_ip_port(conn_index);
 		}
 
+		unsigned int tcp_server::get_session_thread_id( unsigned int conn_index )
+		{
+			return impl_ptr->get_session_thread_id(conn_index);
+		}
+
 		int tcp_server::send( unsigned int conn_index,const void *data_ptr,size_t data_len )
 		{
 			return impl_ptr->send(conn_index,data_ptr,data_len);

@@ -29,7 +29,9 @@ namespace faith
 			m_id_container(scheduler_invalid_timer_index),
 			m_is_running(false),
 			m_main_thread_dispatch(false),
-			m_stop_requested(false)
+			m_stop_requested(false),
+			m_lifecycle_paused(false),
+			m_worker_event_count(0)
 		{
 			initialize_contexts(1);
 			clear_data();
@@ -335,32 +337,35 @@ namespace faith
 		{
 			//FAITH_STACKOVERFLOW_CATCH_BEGIN();
 			current_scheduler_thread_id = thread_id;
-			thread_func_impl(thread_id);
+			thread_func_impl(thread_id, true);
 			//FAITH_STACKOVERFLOW_CATCH_END();
 		}
-		void scheduler_impl::thread_func_impl(unsigned int thread_id)
+		void scheduler_impl::thread_func_impl(unsigned int thread_id, bool is_worker)
 		{
 			boost::asio::io_service& io_service = get_ioservice(thread_id);
 			do
 			{
+				if (is_worker)
+				{
+					begin_worker_event();
+				}
 				try
 				{
 					boost::system::error_code ec;
-					io_service.run();
+					io_service.poll_one();
 					//std::cout << "ec = " << ec << std::endl;
 				}
 				catch (...)
 				{
-					boost::recursive_mutex::scoped_lock	lock(m_scheduler_mutex);
-
-					static int exception_count = 0;
-
-					++exception_count;					
-					if (exception_count == 1)
+					if (is_worker)
 					{
-						//???????????????????????????????????throw??????????????????????????????????
+						end_worker_event();
+					}
 					throw;
 				}
+				if (is_worker)
+				{
+					end_worker_event();
 				}
 				if (m_is_running && !m_stop_requested && io_service.stopped())
 				{
@@ -373,7 +378,61 @@ namespace faith
 		void scheduler_impl::run_current_thread()
 		{
 			current_scheduler_thread_id = 0;
-			thread_func_impl(0);
+			thread_func_impl(0, false);
+		}
+
+		void scheduler_impl::begin_worker_event()
+		{
+			std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+			m_lifecycle_condition.wait(lock,
+				[this]() { return !m_lifecycle_paused; });
+			++m_worker_event_count;
+		}
+
+		void scheduler_impl::end_worker_event()
+		{
+			std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+			if (m_worker_event_count > 0)
+			{
+				--m_worker_event_count;
+			}
+			if (m_worker_event_count == 0)
+			{
+				m_lifecycle_condition.notify_all();
+			}
+		}
+
+		void scheduler_impl::run_exclusive(post_handler_type handler)
+		{
+			{
+				std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+				m_lifecycle_paused = true;
+				m_lifecycle_condition.wait(lock,
+					[this]() { return m_worker_event_count == 0; });
+			}
+
+			try
+			{
+				if (handler)
+				{
+					handler();
+				}
+			}
+			catch (...)
+			{
+				{
+					std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+					m_lifecycle_paused = false;
+				}
+				m_lifecycle_condition.notify_all();
+				throw;
+			}
+
+			{
+				std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+				m_lifecycle_paused = false;
+			}
+			m_lifecycle_condition.notify_all();
 		}
 
 		void scheduler_impl::request_stop()

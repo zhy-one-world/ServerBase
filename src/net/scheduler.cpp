@@ -68,6 +68,14 @@ namespace faith
 			}
 		}
 
+		void scheduler::run_exclusive(post_handler_type handler)
+		{
+			if (m_impl_ptr)
+			{
+				m_impl_ptr->run_exclusive(handler);
+			}
+		}
+
 		void scheduler::request_stop()
 		{
 			if (m_impl_ptr)
