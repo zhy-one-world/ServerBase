@@ -6,10 +6,9 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 32)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
 
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
-add_definitions(-DSPDLOG_USE_STD_FORMAT)
 add_definitions(-DSPDLOG_COMPILED_LIB)
 add_definitions(-D_WIN32_WINNT=0x0A00)
 
