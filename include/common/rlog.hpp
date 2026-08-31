@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <sstream>
 #include <string>
+#include <net/scheduler.hpp>
 
 namespace faith
 {
@@ -89,8 +90,9 @@ namespace faith
 		if (::faith::rlog::should_log(::faith::rlog::LEVEL))                               \
 		{                                                                                  \
 			::faith::rlog::stream _faith_rlog_stream_(::faith::rlog::LEVEL);               \
-			_faith_rlog_stream_ << "[func:" << __FUNCTION__                                \
-				<< " line:" << __LINE__ << "] " << MSG;                                    \
+			_faith_rlog_stream_ << "[thread:"                                             \
+				<< ::faith::net::scheduler::getInstance().get_current_thread_id()         \
+				<< " func:" << __FUNCTION__ << " line:" << __LINE__ << "] " << MSG;       \
 		}                                                                                  \
 	} while (0)
 #endif
