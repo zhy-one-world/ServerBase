@@ -92,7 +92,7 @@ namespace faith
 			::faith::rlog::stream _faith_rlog_stream_(::faith::rlog::LEVEL);               \
 			_faith_rlog_stream_ << "[thread:"                                             \
 				<< ::faith::net::scheduler::getInstance().get_current_thread_id()         \
-				<< " func:" << __FUNCTION__ << " line:" << __LINE__ << "] " << MSG;       \
+				<< " " << __FUNCTION__ << " line:" << __LINE__ << "] " << MSG;       \
 		}                                                                                  \
 	} while (0)
 #endif

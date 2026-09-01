@@ -15,6 +15,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/any.hpp>
+#include <memory>
 #include <string>
 #include "xchar.hpp"
 #include "plugin.hpp"
@@ -25,6 +26,8 @@ namespace faith
 	namespace net
 	{
 		class tcp_client_impl;
+		class tcp_client_session;
+		typedef std::shared_ptr<tcp_client_session> tcp_client_session_ptr;
 		//
 		//	asynchronous TCP client facade, Singleton class
 		// 
@@ -40,9 +43,9 @@ namespace faith
 				e_ci_connection_successed
 			};
 
-			typedef boost::function<void(unsigned int)>							onclose_handler_type;
-			typedef boost::function<void(unsigned int,e_connect_info,xstring)>	connection_handler_type;
-			typedef boost::function<void(unsigned int,const void*,size_t)>		onrecv_handler_type;
+			typedef boost::function<void(tcp_client_session_ptr)>							onclose_handler_type;
+			typedef boost::function<void(tcp_client_session_ptr,e_connect_info,xstring)>	connection_handler_type;
+			typedef boost::function<void(tcp_client_session_ptr,const void*,size_t)>		onrecv_handler_type;
 
 			struct options
 			{
@@ -66,19 +69,18 @@ namespace faith
 			tcp_client();
 			~tcp_client();
 		public:
-			static tcp_client&					get_instance(void);			
-			unsigned int						connect_to(unsigned int conn_index,
+			static tcp_client&					get_instance(void);
+			tcp_client_session_ptr				connect_to(
 				xstring ip,xstring service_port,
 				connection_handler_type connection_handler,
 				onclose_handler_type onclose_handler,
 				onrecv_handler_type onrecv_handler);
 
-			void								disconnect(unsigned int conn_index);
-			int									send(unsigned int conn_index,const void *data_ptr,size_t data_len);
-			int									send_multi(unsigned int conn_index,const datablock_queue_type& data_queue);
+			void								disconnect(const tcp_client_session_ptr& session);
+			int									send(const tcp_client_session_ptr& session,const void *data_ptr,size_t data_len);
+			int									send_multi(const tcp_client_session_ptr& session,const datablock_queue_type& data_queue);
 			bool								set_option(const boost::any& option_item);
 			bool								get_option(boost::any& option_item);
-			void								init_client_server(unsigned int server_num);
 			template<class option_type>
 			bool								get_option(option_type& dest)
 			{

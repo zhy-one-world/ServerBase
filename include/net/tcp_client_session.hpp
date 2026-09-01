@@ -31,7 +31,7 @@ namespace faith
 		{
 			typedef std::shared_ptr<tcp_client_session>									tcp_client_session_ptr;
 			typedef boost::function<void(unsigned int,const void*,size_t)>					onrecv_handler_type;
-			typedef boost::function<void(unsigned int,tcp_client::e_connect_info,xstring)>	connection_handler_type;
+			typedef boost::function<void(tcp_client_session_ptr,tcp_client::e_connect_info,xstring)>	connection_handler_type;
 			enum e_connection_state
 			{
 				e_cs_none,
@@ -57,7 +57,7 @@ namespace faith
 		private:
 			void						handle_connect(const boost::system::error_code& err);
 			void						handle_resolve(const boost::system::error_code& err,tcp::resolver::results_type results);
-			void						post_connection_handler(unsigned int conn_index,tcp_client::e_connect_info info,const xstring & msg);
+			void						post_connection_handler(tcp_client_session_ptr session,tcp_client::e_connect_info info,const xstring & msg);
 		private:
 			e_connection_state			m_connection_state;
 			boost::asio::io_service&	m_io_service;

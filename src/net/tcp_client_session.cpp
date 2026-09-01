@@ -47,17 +47,6 @@ namespace faith
 
 		tcp_client_session::~tcp_client_session(void)
 		{
-			switch(m_connection_state)
-			{
-			case e_cs_resolving:
-				post_connection_handler(get_conn_index(),tcp_client::e_ci_addr_resovle_failed,_XTEXT("Unknown error."));
-				break;
-			case e_cs_connecting:
-				post_connection_handler(get_conn_index(),tcp_client::e_ci_connection_failed,_XTEXT("Unknown error."));
-				break;
-			default:
-				break;
-			}			
 		}
 
 		void tcp_client_session::start()
@@ -91,9 +80,10 @@ namespace faith
 
 		void tcp_client_session::handle_resolve(const boost::system::error_code& err,tcp::resolver::results_type results)
 		{
+			tcp_client_session_ptr session_ptr = shared_from_this();
 			if (!err)
 			{
-				m_connection_handler(get_conn_index(),tcp_client::e_ci_addr_resovle_successed,_XTEXT("address resolved successfully"));
+				m_connection_handler(session_ptr,tcp_client::e_ci_addr_resovle_successed,_XTEXT("address resolved successfully"));
 				m_connection_state = e_cs_connecting;
 				boost::asio::async_connect(get_socket(), results,
 					m_strand.wrap(boost::bind(&tcp_client_session::handle_connect,shared_from_this(),
@@ -102,28 +92,29 @@ namespace faith
 			else
 			{
 				m_connection_state = e_cs_none;
-				post_connection_handler(get_conn_index(),tcp_client::e_ci_addr_resovle_failed,_asio_message(err.message()));
+				post_connection_handler(session_ptr,tcp_client::e_ci_addr_resovle_failed,_asio_message(err.message()));
 			}
 		}
 
 		void tcp_client_session::handle_connect(const boost::system::error_code& err)
 		{
+			tcp_client_session_ptr session_ptr = shared_from_this();
 			if (!err)
 			{
 				open();
 				m_connection_state = e_cs_connected;
-				m_connection_handler(get_conn_index(),tcp_client::e_ci_connection_successed,_XTEXT("connection established"));
+				m_connection_handler(session_ptr,tcp_client::e_ci_connection_successed,_XTEXT("connection established"));
 			}
 			else
 			{
 				m_connection_state = e_cs_none;
-				post_connection_handler(get_conn_index(),tcp_client::e_ci_connection_failed,_asio_message(err.message()));
+				post_connection_handler(session_ptr,tcp_client::e_ci_connection_failed,_asio_message(err.message()));
 			}
 		}
 
-		void tcp_client_session::post_connection_handler(unsigned int conn_index,tcp_client::e_connect_info info,const xstring  & msg)
+		void tcp_client_session::post_connection_handler(tcp_client_session_ptr session,tcp_client::e_connect_info info,const xstring  & msg)
 		{
-			scheduler::getInstance().get_impl()->inner_post(boost::bind(m_connection_handler,conn_index,info,msg));
+			scheduler::getInstance().get_impl()->inner_post(boost::bind(m_connection_handler,session,info,msg));
 		}
 	}
 }
