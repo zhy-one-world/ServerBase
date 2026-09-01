@@ -27,6 +27,10 @@ namespace faith
 			//发送延时数据
 			virtual void					send_delay_data() = 0;
 		protected:
+			void							unregister_from_delay_queue()
+			{
+				m_delay_send_queue.remove_session(this);
+			}
 			bool							check_send_time()
 			{
 				return m_delay_send_queue.get_loop_counter() >= m_next_send_time;

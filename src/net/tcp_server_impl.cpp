@@ -440,10 +440,15 @@ namespace faith
 					return;
 				}
 				tcp_server_session* pSession = m_conn_array[conn_index];
-				if (pSession != NULL)
+				if (pSession == NULL || !pSession->been_opened())
 				{
-					pSession->close();
+					return;
 				}
+
+				pSession->close();
+				--m_conn_size;
+				const bool need_accept = m_conn_size == m_conn_max_size - 1;
+				finish_session_close(pSession, need_accept);
 			});
 		}
 
@@ -469,20 +474,8 @@ namespace faith
 				return;
 			}
 
-			m_scheduler_impl.run_exclusive([this, session]()
-			{
-				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-				bool been_opened = session->been_opened();
-
-				session->close();
-				if (been_opened)
-				{
-					--m_conn_size;
-				}
-				const bool need_accept =
-					been_opened && m_conn_size == m_conn_max_size - 1;
-				finish_session_close(session, need_accept);
-			});
+			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+			session->set_data_use(false);
 		}
 
 		void tcp_server_impl::finish_session_close(tcp_server_session* session, bool need_accept)
@@ -540,6 +533,8 @@ namespace faith
 				m_conn_array[i] = new tcp_server_session(0, thread_id, m_scheduler_impl.get_ioservice(thread_id), m_recv_handler,
 					m_session_option, *m_send_buffer_pool, *m_recv_buffer_pool);
 				m_conn_array[i]->set_conn_index(i);
+				m_conn_array[i]->set_close_handler(
+					boost::bind(&tcp_server_impl::close, this, _1));
 			}
 			m_conn_size = 0;
 		}

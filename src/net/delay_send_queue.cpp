@@ -28,7 +28,6 @@ namespace faith
 		}
 		void delay_send_queue::release()
 		{
-			//为了使月光宝盒正常工作，不要在此删除计时器
 		}
 
 		void delay_send_queue::update(unsigned int timer_index)

@@ -55,6 +55,7 @@ namespace faith
 		{
 			thread_local unsigned int current_scheduler_thread_id = 0;
 			thread_local bool lifecycle_exclusive_active = false;
+			thread_local bool worker_event_active = false;
 		}
 
 		void scheduler_impl::initialize_contexts(unsigned int context_count)
@@ -388,10 +389,12 @@ namespace faith
 			m_lifecycle_condition.wait(lock,
 				[this]() { return !m_lifecycle_paused; });
 			++m_worker_event_count;
+			worker_event_active = true;
 		}
 
 		void scheduler_impl::end_worker_event()
 		{
+			worker_event_active = false;
 			std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
 			if (m_worker_event_count > 0)
 			{
@@ -414,6 +417,12 @@ namespace faith
 				return;
 			}
 			lifecycle_exclusive_active = true;
+			bool released_own_worker_event = false;
+			if (worker_event_active)
+			{
+				end_worker_event();
+				released_own_worker_event = true;
+			}
 			{
 				std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
 				m_lifecycle_paused = true;
@@ -436,6 +445,10 @@ namespace faith
 				}
 				lifecycle_exclusive_active = false;
 				m_lifecycle_condition.notify_all();
+				if (released_own_worker_event)
+				{
+					begin_worker_event();
+				}
 				throw;
 			}
 
@@ -445,6 +458,10 @@ namespace faith
 			}
 			lifecycle_exclusive_active = false;
 			m_lifecycle_condition.notify_all();
+			if (released_own_worker_event)
+			{
+				begin_worker_event();
+			}
 		}
 
 		void scheduler_impl::request_stop()

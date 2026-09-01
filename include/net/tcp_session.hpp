@@ -49,9 +49,12 @@ namespace faith
 				recv_handler_type;
 			typedef boost::function<void(unsigned int,int)>
 				plugin_removed_handler_type;
+			typedef boost::function<void(unsigned int)>
+				close_handler_type;
 
 			recv_handler_type			m_recv_handler;				// invoke it while get packet
 			plugin_removed_handler_type	m_plugin_removed_handler;	// invoke it while plugin removed
+			close_handler_type			m_close_handler;
 
 			boost::asio::ip::tcp::socket	m_socket;
 
@@ -105,6 +108,7 @@ namespace faith
 			inline void				set_conn_index(unsigned int conn_index) { m_conn_index = conn_index; }
 			inline bool				get_data_use() { return m_is_use; }
 			inline void				set_data_use(bool is_use) { m_is_use = is_use; }
+			inline void				set_close_handler(close_handler_type handler) { m_close_handler = handler; }
 
 			bool	send( const void* data_ptr, size_t data_size );
 			bool	send_multi(const datablock_queue_type& data_queue);
@@ -244,8 +248,14 @@ namespace faith
 			}
 			if(error)
 			{				
-				//std::cout << "tcp_session<T>::handle_read error = " << error << std::endl;
-				////FAITH_LOG_ERROR(scheduler::getInstance().get_logger(),__XFUNCTION__ << _XTEXT(" info: ") << _asio_message(error.message()) << _XTEXT(" file: ") << __XFILE__ << _XTEXT(" line: ") << __LINE__ );
+				m_reading = false;
+				if (error != boost::asio::error::operation_aborted)
+				{
+					if (m_been_opened && m_close_handler)
+					{
+						m_close_handler(m_conn_index);
+					}
+				}
 				return;
 			}
 
@@ -264,6 +274,10 @@ namespace faith
 					<< _XTEXT("conn_index:") << get_conn_index() << _XTEXT("\n\t")
 					<< _XTEXT(" local ip addr:(") << m_local_endpoint.address().to_string().c_str() << _XTEXT(",") << m_local_endpoint.port() << _XTEXT(")") << _XTEXT("\n\t")
 					<< _XTEXT(" remote ip addr:(") << m_remote_endpoint.address().to_string().c_str() << _XTEXT(",") << m_remote_endpoint.port() << _XTEXT(")") << std::endl;
+				if (m_been_opened && m_close_handler)
+				{
+					m_close_handler(m_conn_index);
+				}
 				return;
 			}
 			if(packet_count > 0)
@@ -343,14 +357,19 @@ namespace faith
 			}
 			if(error)
 			{
-				//std::cout << "tcp_session<T>::handle_writ error ="<< error << std::endl;
-				////FAITH_LOG_ERROR(scheduler::getInstance().get_logger(),__XFUNCTION__ << _XTEXT(" info: ") << _asio_message(error.message()) << _XTEXT(" file: ") << __XFILE__ << _XTEXT(" line: ") << __LINE__ );
 				if (bytes_transferred > 0)
 				{
 					boost::recursive_mutex::scoped_lock sendbuf_lock(m_sendbuf_mutex);
 					m_send_buf.pop(bytes_transferred);
 				}
 				m_sending = false;
+				if (error != boost::asio::error::operation_aborted)
+				{
+					if (m_been_opened && m_close_handler)
+					{
+						m_close_handler(m_conn_index);
+					}
+				}
 				return;
 			}
 			
@@ -574,6 +593,9 @@ namespace faith
 		template < typename T >
 		tcp_session<T>::~tcp_session()
 		{
+			// Remove from delay-send list before the derived vtable is torn down.
+			// Otherwise delay_send_queue::update may call the pure virtual send_delay_data.
+			unregister_from_delay_queue();
 			close();
 		}
 	}	// end of namespace net
