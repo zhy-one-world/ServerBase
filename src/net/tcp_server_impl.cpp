@@ -9,14 +9,13 @@
 *********************************************************************/
 #include "asio.hpp"
 #include <boost/bind.hpp>
-#include <boost/pool/object_pool.hpp>
 #include "scheduler.hpp"
 #include "tcp_server_impl.hpp"
 #include <rlog.hpp>
-//#include "faith_logger.hpp"
 #include "mlb.hpp"
 #include "persistence_id_generator.hpp"
 #include "mem_pool.hpp"
+#include <cstdlib>
 
 using boost::asio::ip::tcp;
 
@@ -27,17 +26,9 @@ namespace faith
 {
 	namespace net 
 	{
-		//
-		//	Implemention of TCPServer_impl
-		//
 		static void call_serverstatus_handler(tcp_server::serverstatus_handler_type status_handler,boost::uint32_t instance_id,tcp_server::e_server_status_type status)
 		{
 			status_handler(status);
-		}
-
-		static void recur_serverstatus_handler(tcp_server::serverstatus_handler_type status_handler,boost::uint32_t status)
-		{
-			status_handler(static_cast<tcp_server::e_server_status_type>(status));
 		}
 
 		static void call_onconnected_handler(tcp_server::onconnected_handler_type onconnected_handler,boost::uint32_t instance_id,unsigned int connindex)
@@ -48,27 +39,6 @@ namespace faith
 		static void call_onclose_handler(tcp_server::onclose_handler_type onclose_handler,boost::uint32_t instance_id,unsigned int connindex)
 		{
 			onclose_handler(connindex);
-		}
-
-		static void recur_onrecv_handler(tcp_server::onrecv_handler_type onrecv_handler,unsigned int connindex,const xstring & data )
-		{
-			onrecv_handler(connindex,data.c_str(),data.length());
-		}
-
-		static bool call_plugin(plug_in plugin,boost::shared_ptr<int> slot,boost::uint32_t instance_id,unsigned int connindex,const void *data_ptr,size_t data_len )
-		{
-			bool ret=plugin(connindex,data_ptr,data_len);
-			return ret;
-		}
-
-		static bool in_tcpserver_remove_plugin = false;
-		static void plugin_removed_handler(boost::uint32_t instance_id,unsigned int connindex,int slot)
-		{
-		}
-
-		static void recur_plugin(plug_in plugin,unsigned int connindex,const xstring & data )
-		{
-			plugin(connindex,data.c_str(),data.length());
 		}
 
 		tcp_server_impl::~tcp_server_impl()
@@ -89,8 +59,7 @@ namespace faith
 			m_strand(strand),
 			m_acceptor(io_service),
 			m_be_listening(false),
-			m_session_deallocator(m_strand.wrap(boost::bind(&tcp_server_impl::destroy_session,this,_1))),
-			m_sessions_pool(),
+			m_conn_array(conn_array_size),
 			m_options_applied(false),
 			m_send_buffer_pool(NULL),
 			m_recv_buffer_pool(NULL),
@@ -113,7 +82,7 @@ namespace faith
 			m_instance_id = common::persistence_id_generator::getInstance().get_id(_XTEXT("TCPServer"));
 			init_handlers(status_handler,onconnected_handler,onclose_handler,recv_handler);
 			init_options();
-			//opc_create_counter_fun();
+			init_conn_index_lists();
 		}
 
 		tcp_server_impl::tcp_server_impl( 
@@ -127,8 +96,7 @@ namespace faith
 			m_strand(strand),
 			m_acceptor( io_service ),
 			m_be_listening( false ),
-			m_session_deallocator(m_strand.wrap(boost::bind(&tcp_server_impl::destroy_session,this,_1))),
-			m_sessions_pool(),
+			m_conn_array(conn_array_size),
 			m_options_applied(false),
 			m_send_buffer_pool(NULL),
 			m_recv_buffer_pool(NULL),
@@ -139,6 +107,17 @@ namespace faith
 			m_instance_id = common::persistence_id_generator::getInstance().get_id(_XTEXT("TCPServer"));
 			init_handlers(status_handler,onconnected_handler,onclose_handler,recv_handler);
 			init_options();
+			init_conn_index_lists();
+		}
+
+		void tcp_server_impl::init_conn_index_lists()
+		{
+			m_empty.clear();
+			for (unsigned int i = 0; i < conn_array_size; ++i)
+			{
+				m_empty.push_back(i);
+				m_conn_array[i].reset();
+			}
 		}
 
 		void tcp_server_impl::call_onrecv_handler(tcp_server::onrecv_handler_type onrecv_handler, unsigned int connindex,const void *data_ptr,size_t data_len )
@@ -146,6 +125,33 @@ namespace faith
 			onrecv_handler(connindex,data_ptr,data_len);
 		}
 
+		tcp_server_session_ptr tcp_server_impl::get_session(unsigned int conn_index)
+		{
+			if (conn_index >= conn_array_size)
+			{
+				_RLOG_(MWARN, "tcp_server get_session invalid connindex:" << conn_index
+					<< " array size:" << conn_array_size);
+				return tcp_server_session_ptr();
+			}
+			return m_conn_array[conn_index];
+		}
+
+		void tcp_server_impl::release_session_index(unsigned int conn_index)
+		{
+			if (conn_index >= conn_array_size)
+			{
+				_RLOG_(MWARN, "tcp_server release_session_index invalid connindex:" << conn_index
+					<< " array size:" << conn_array_size);
+				return;
+			}
+			if (!m_conn_array[conn_index])
+			{
+				_RLOG_(MWARN, "tcp_server release_session_index session is null, connindex:" << conn_index);
+				return;
+			}
+			m_conn_array[conn_index].reset();
+			m_empty.push_back(conn_index);
+		}
 
 		void tcp_server_impl::listen()
 		{
@@ -154,41 +160,37 @@ namespace faith
 			tcp_server_session_ptr smart_ptr = create_session();
 			if( smart_ptr == NULL )
 			{
+				_RLOG_(MERROR, "tcp_server listen create_session failed, use:"
+					<< (conn_array_size - m_empty.size()) << " empty:" << m_empty.size());
 				return;
 			}
 			m_acceptor.async_accept( smart_ptr->get_socket(),
 				m_strand.wrap(boost::bind( &tcp_server_impl::handle_accept,this,smart_ptr,boost::asio::placeholders::error ) ));
 		}
 
-		//MLB_CLASS_FUNC_0(bool,TCPServer_impl,start)
 		bool tcp_server_impl::start( void )
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
 
-			tcp_server::options::connections_num_limit connections_num_limit;
-			get_option(connections_num_limit);
-			//the extra one is the listening session
-			m_conn_index_generator.set_max_count(connections_num_limit.value+1);
+			apply_options();
+
 			if( m_be_listening )
 			{
 				return false;
 			}
 			else
 			{
-				// NOT allow the acceptor to reuse the address (i.e. SO_REUSEADDR)
 				m_acceptor.open(m_endpoint.protocol());
 				m_acceptor.set_option(tcp::acceptor::reuse_address(false));
 
 				boost::system::error_code	error;
 
-				//	bind endpoint
 				m_acceptor.bind(m_endpoint,error);
 				if(error)
 				{
 					return false;
 				}
 
-				//	start listen
 				m_acceptor.listen(boost::asio::socket_base::max_listen_connections,error);
 				if(error)
 				{
@@ -202,14 +204,8 @@ namespace faith
 			}
 		}
 
-		//MLB_CLASS_FUNC_1(void,TCPServer_impl,stop,
-		//	bool,wait_until_finished)
 		void tcp_server_impl::stop( bool wait_until_finished )
 		{
-			/*if this fuction is called in main thread,the call_close_handler may not acctual
-				executed the session's close_handler ,instead of posted by service by strand.
-				So we only do some clear action at first  and then wait.
-			*/
 			m_scheduler_impl.run_exclusive([this]()
 			{
 				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
@@ -217,43 +213,37 @@ namespace faith
 				{
 					m_be_listening = false;
 					m_acceptor.close();
-					for (int i = 0; i < m_conn_max_size; ++i)
+					for (unsigned int i = 0; i < conn_array_size; ++i)
 					{
-						if (m_conn_array[i]->been_opened())
+						tcp_server_session_ptr session = m_conn_array[i];
+						if (session && session->been_opened())
 						{
-							m_conn_array[i]->close();
+							session->close();
 						}
 					}
 				}
 			});
 		}
 
-		//MLB_CLASS_FUNC_0(std::size_t,TCPServer_impl,get_conn_count)
 		std::size_t	tcp_server_impl::get_conn_count( void )
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			return m_conn_size;
+			return conn_array_size - m_empty.size();
 		}
 
-		//MLB_CLASS_FUNC_1(xstring,TCPServer_impl,get_ip_addr,
-		//	unsigned int,conn_index)
 		xstring tcp_server_impl::get_ip_addr( unsigned int conn_index )
 		{
 			xstring ret;
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index < 0 || conn_index >= m_conn_max_size)
-			{
-				return ret;
-			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
+			tcp_server_session_ptr pSession = get_session(conn_index);
 			if( pSession == NULL )
 			{
+				_RLOG_(MWARN, "tcp_server get_ip_addr session is null, connindex:" << conn_index);
 			}
 			else
 			{
 				const boost::asio::ip::tcp::endpoint& ep = pSession->get_remote_endpoint();
 
-				/* TODO: ???????ip????????????????????? */
 				xostringstream buf;
 				buf << ep.address().to_string().c_str();
 				ret = buf.str();
@@ -261,20 +251,14 @@ namespace faith
 			return ret;
 		}
 
-		//MLB_CLASS_FUNC_1(unsigned short,TCPServer_impl,get_ip_port,
-		//	unsigned int,conn_index)
 		unsigned short tcp_server_impl::get_ip_port( unsigned int conn_index )
 		{
-			unsigned short ret;
+			unsigned short ret = 0;
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index < 0 || conn_index >= m_conn_max_size)
-			{
-				return 0;
-			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
+			tcp_server_session_ptr pSession = get_session(conn_index);
 			if( pSession == NULL )
 			{
-
+				_RLOG_(MWARN, "tcp_server get_ip_port session is null, connindex:" << conn_index);
 			}
 			else
 			{
@@ -286,21 +270,22 @@ namespace faith
 		unsigned int tcp_server_impl::get_session_thread_id( unsigned int conn_index )
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index >= static_cast<unsigned int>(m_conn_max_size))
+			tcp_server_session_ptr pSession = get_session(conn_index);
+			if (pSession == NULL)
 			{
+				_RLOG_(MWARN, "tcp_server get_session_thread_id session is null, connindex:" << conn_index);
 				return 0;
 			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
-			return pSession == NULL ? 0 : pSession->get_thread_id();
+			return pSession->get_thread_id();
 		}
 
 		void tcp_server_impl::handle_accept( tcp_server_session_ptr session_ptr,const boost::system::error_code& error )
 		{
 			if (nullptr == session_ptr)
 			{
+				_RLOG_(MERROR, "tcp_server handle_accept session_ptr is null, error:" << error.message());
 				return;
 			}
-			//std::cout << "tcp_server_impl::handle_accept conn_index = " << session_ptr->get_conn_index() << " error = " << error << " m_conn_size ="<< m_conn_size<<std::endl;
 			if (!error)
 			{	
 				_RLOG_(MINFO, "tcp server accepted socket, connindex:"
@@ -312,18 +297,29 @@ namespace faith
 					m_onconnected_handler(session_ptr->get_conn_index());
 				});
 				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-				++m_conn_size;
-				if (m_conn_size >= m_conn_max_size)
+				if (m_empty.empty())
 				{
+					_RLOG_(MWARN, "tcp_server handle_accept connection full, use:"
+						<< (conn_array_size - m_empty.size()) << " array size:" << conn_array_size);
 					return;
 				}
 				tcp_server_session_ptr new_session_ptr = create_session();
+				if (new_session_ptr == NULL)
+				{
+					_RLOG_(MERROR, "tcp_server handle_accept create next session failed, use:"
+						<< (conn_array_size - m_empty.size()) << " empty:" << m_empty.size());
+					return;
+				}
 				m_acceptor.async_accept(new_session_ptr->get_socket(),
 					m_strand.wrap(boost::bind(&tcp_server_impl::handle_accept, this, new_session_ptr, boost::asio::placeholders::error)));
 			}
 			else
 			{
 				session_ptr->close();
+				{
+					boost::recursive_mutex::scoped_lock server_lock(m_mutex);
+					release_session_index(session_ptr->get_conn_index());
+				}
 				if(m_be_listening)
 				{
 					listen();
@@ -333,19 +329,17 @@ namespace faith
 
 		void tcp_server_impl::handle_session_close( unsigned int conn_index,tcp_server_session* session_ptr )
 		{
-			//std::cout << "tcp_server_impl::handle_session_close conn_index =" << conn_index << std::endl;
 		}
 
 		int	tcp_server_impl::inner_send( unsigned int conn_index,const void *data_ptr,size_t data_len)
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index < 0 || conn_index >= m_conn_max_size)
-			{
-				return 0;
-			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
+			tcp_server_session_ptr pSession = get_session(conn_index);
 			if( pSession == NULL || pSession->been_opened() == false)
 			{
+				_RLOG_(MWARN, "tcp_server inner_send session unavailable, connindex:" << conn_index
+					<< " null:" << (pSession == NULL)
+					<< " opened:" << (pSession && pSession->been_opened()));
 				return 0;
 			}
 			else
@@ -370,13 +364,12 @@ namespace faith
 		int tcp_server_impl::inner_send_multi(unsigned int conn_index,const datablock_queue_type& data_queue)
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			if (conn_index < 0 || conn_index >= m_conn_max_size)
-			{
-				return 0;
-			}
-			tcp_server_session* pSession = m_conn_array[conn_index];
+			tcp_server_session_ptr pSession = get_session(conn_index);
 			if( pSession == NULL || pSession->been_opened() == false)
 			{
+				_RLOG_(MWARN, "tcp_server inner_send_multi session unavailable, connindex:" << conn_index
+					<< " null:" << (pSession == NULL)
+					<< " opened:" << (pSession && pSession->been_opened()));
 				return 0;
 			}
 			else
@@ -410,18 +403,14 @@ namespace faith
 		}
 		int tcp_server_impl::send_multi(unsigned int conn_index,const datablock_queue_type& data_queue)
 		{
-			//++(*m_send_instance);
 			{
 				size_t data_len=0;
 				for(datablock_queue_type::const_iterator it = data_queue.begin();it!=data_queue.end();++it)
 					data_len+=it->second;
-				//(*m_send_bytes_instance) += data_len;
 			}
 			return inner_send_multi(conn_index,data_queue);
 		}
 
-		//MLB_CLASS_FUNC_1(bool,TCPServer_impl,close,
-		//	unsigned int , conn_index )
 		bool tcp_server_impl::close( unsigned int conn_index )
 		{
 			m_scheduler_impl.post(
@@ -435,19 +424,17 @@ namespace faith
 			m_scheduler_impl.run_exclusive([this, conn_index]()
 			{
 				boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-				if (conn_index >= static_cast<unsigned int>(m_conn_max_size))
-				{
-					return;
-				}
-				tcp_server_session* pSession = m_conn_array[conn_index];
+				tcp_server_session_ptr pSession = get_session(conn_index);
 				if (pSession == NULL || !pSession->been_opened())
 				{
+					_RLOG_(MWARN, "tcp_server close_on_main session unavailable, connindex:" << conn_index
+						<< " null:" << (pSession == NULL)
+						<< " opened:" << (pSession && pSession->been_opened()));
 					return;
 				}
 
 				pSession->close();
-				--m_conn_size;
-				const bool need_accept = m_conn_size == m_conn_max_size - 1;
+				const bool need_accept = m_empty.empty();
 				finish_session_close(pSession, need_accept);
 			});
 		}
@@ -455,40 +442,67 @@ namespace faith
 		tcp_server_session_ptr tcp_server_impl::create_session()
 		{
 			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			for (int i = 0; i < m_conn_max_size; ++i)
+			apply_options();
+
+			if (m_empty.empty())
 			{
-				if (m_conn_array[i]->get_data_use() == false)
-				{
-					tcp_server_session_ptr smart_ptr = tcp_server_session_ptr(m_conn_array[i], m_session_deallocator);
-					smart_ptr->set_data_use(true);
-					return smart_ptr;
-				}
+				_RLOG_(MERROR, "tcp_server create_session empty list is empty, use:"
+					<< (conn_array_size - m_empty.size()));
+				return tcp_server_session_ptr();
 			}
-			return tcp_server_session_ptr();
+			if (m_send_buffer_pool == NULL || m_recv_buffer_pool == NULL)
+			{
+				_RLOG_(MERROR, "tcp_server create_session buffer pool is null, send:"
+					<< (m_send_buffer_pool == NULL) << " recv:" << (m_recv_buffer_pool == NULL));
+				return tcp_server_session_ptr();
+			}
+
+			const unsigned int conn_index = m_empty.front();
+			m_empty.pop_front();
+
+			const unsigned int thread_count = m_scheduler_impl.get_thread_count();
+			const unsigned int worker_start_id = m_scheduler_impl.get_worker_thread_start_id();
+			const unsigned int worker_count = thread_count > worker_start_id ? thread_count - worker_start_id : 0;
+			const unsigned int thread_id = worker_count > 0 ? worker_start_id + (std::rand() % worker_count) : 0;
+
+			tcp_server_session_ptr session_ptr = std::make_shared<tcp_server_session>(
+				conn_index,
+				thread_id,
+				m_scheduler_impl.get_ioservice(thread_id),
+				m_recv_handler,
+				m_session_option,
+				*m_send_buffer_pool,
+				*m_recv_buffer_pool);
+			if (session_ptr == NULL)
+			{
+				_RLOG_(MERROR, "tcp_server create_session make_shared failed, connindex:" << conn_index);
+				m_empty.push_back(conn_index);
+				return tcp_server_session_ptr();
+			}
+			session_ptr->set_conn_index(conn_index);
+			session_ptr->set_close_handler(
+				boost::bind(&tcp_server_impl::close, this, _1));
+			m_conn_array[conn_index] = session_ptr;
+			return session_ptr;
 		}
 
-		void tcp_server_impl::destroy_session(tcp_server_session * session)
+		void tcp_server_impl::finish_session_close(tcp_server_session_ptr session, bool need_accept)
 		{
 			if (session == nullptr)
 			{
+				_RLOG_(MWARN, "tcp_server finish_session_close session is null, need_accept:" << need_accept);
 				return;
 			}
-
-			boost::recursive_mutex::scoped_lock server_lock(m_mutex);
-			session->set_data_use(false);
-		}
-
-		void tcp_server_impl::finish_session_close(tcp_server_session* session, bool need_accept)
-		{
-			if (session == nullptr)
-			{
-				return;
-			}
-			session->set_data_use(false);
+			const unsigned int conn_index = session->get_conn_index();
 			if (m_onclose_handler)
 			{
-				m_onclose_handler(session->get_conn_index());
+				m_onclose_handler(conn_index);
 			}
+			else
+			{
+				_RLOG_(MWARN, "tcp_server finish_session_close onclose_handler is null, connindex:" << conn_index);
+			}
+			release_session_index(conn_index);
 			if (need_accept && m_be_listening)
 			{
 				boost::asio::post(m_strand, boost::bind(&tcp_server_impl::listen, this));
@@ -519,25 +533,6 @@ namespace faith
 			options_container::set_option(tcp_server::options::recv_buffer_size(16*1024),true);
 			options_container::set_option(tcp_server::options::delaysending_size_threshold(0),true);
 		}
-		void tcp_server_impl::init_client_server(unsigned int server_num)
-		{
-			m_conn_max_size = server_num;
-			m_conn_array = new tcp_server_session*[m_conn_max_size];
-			apply_options();
-			const unsigned int thread_count = m_scheduler_impl.get_thread_count();
-			const unsigned int worker_start_id = m_scheduler_impl.get_worker_thread_start_id();
-			const unsigned int worker_count = thread_count > worker_start_id ? thread_count - worker_start_id : 0;
-			for (int i = 0; i < m_conn_max_size; ++i)
-			{
-				const unsigned int thread_id = worker_count > 0 ? worker_start_id + (std::rand() % worker_count) : 0;
-				m_conn_array[i] = new tcp_server_session(0, thread_id, m_scheduler_impl.get_ioservice(thread_id), m_recv_handler,
-					m_session_option, *m_send_buffer_pool, *m_recv_buffer_pool);
-				m_conn_array[i]->set_conn_index(i);
-				m_conn_array[i]->set_close_handler(
-					boost::bind(&tcp_server_impl::close, this, _1));
-			}
-			m_conn_size = 0;
-		}
 #define GET_OPTION(OBJ,OPTION)						\
 	{												\
 		tcp_server::options::OPTION opt;				\
@@ -551,18 +546,10 @@ namespace faith
 			{
 				return;
 			}
-//			GET_OPTION(m_session_option,tcp_nodelay)
 			GET_OPTION(m_session_option,max_packet_size)
 			GET_OPTION(m_session_option,send_buffer_size)
 			GET_OPTION(m_session_option,recv_buffer_size)
 			GET_OPTION(m_session_option,delaysending_size_threshold)
-//			GET_OPTION(m_session_option,delaysending_time_threshold)
-//			GET_OPTION(m_session_option,close_overflowed_session)
-// 			if(m_session_option.delaysending_size_threshold > 0 && m_session_option.tcp_nodelay == false)
-// 			{
-// 				options_container::set_option(tcp_server::options::tcp_nodelay(true));
-// 				m_session_option.tcp_nodelay = true;
-// 			}
 
 			create_buffer_pools();
 
@@ -609,13 +596,15 @@ namespace faith
 			m_send_buffer_pool = new (std::nothrow) send_buffer_pool_type(m_session_option.send_buffer_size);
 			if(m_send_buffer_pool == NULL)
 			{
-
+				_RLOG_(MERROR, "tcp_server create_buffer_pools send_buffer_pool is null, size:"
+					<< m_session_option.send_buffer_size);
 			}
 
 			m_recv_buffer_pool = new (std::nothrow) recv_buffer_pool_type(m_session_option.recv_buffer_size+max_real_packet_size);
 			if(m_recv_buffer_pool == NULL)
 			{
-
+				_RLOG_(MERROR, "tcp_server create_buffer_pools recv_buffer_pool is null, size:"
+					<< (m_session_option.recv_buffer_size + max_real_packet_size));
 			}
 		}
 	}

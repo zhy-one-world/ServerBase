@@ -11,6 +11,7 @@
 #define _TCP_CLIENT_IMPL_H_
 
 #include <map>
+#include <memory>
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 #include "tcp_client_session.hpp"
@@ -26,7 +27,7 @@ namespace faith
 {
 	namespace net
 	{		
-		typedef boost::shared_ptr<tcp_client_session>	tcp_client_session_ptr;
+		typedef std::shared_ptr<tcp_client_session>	tcp_client_session_ptr;
 		class tcp_client_impl : public options_container, private boost::noncopyable
 		{
 			enum
@@ -91,7 +92,7 @@ namespace faith
 			tcp_session_option		m_session_option;
 			send_buffer_pool_type*	m_send_buffer_pool;
 			recv_buffer_pool_type*	m_recv_buffer_pool;			
-			scheduler_impl&			m_scheduler_impl;	// 性能优化,去除getInstance
+			scheduler_impl&			m_scheduler_impl;	// ???????,???getInstance
 		};
 	}
 }

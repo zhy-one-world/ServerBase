@@ -128,9 +128,5 @@ namespace faith
 		{
 			return impl_ptr->get_option(option_item);
 		}
-		void tcp_server::init_client_server(unsigned int server_num, unsigned int init_num)
-		{
-			impl_ptr->init_client_server(server_num);
-		}
 	}
 }

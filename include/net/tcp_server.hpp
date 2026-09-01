@@ -105,7 +105,6 @@ namespace faith
 				dest = *ptr;
 				return true;
 			}
-			void								init_client_server(unsigned int server_num, unsigned int init_num);
 		private:
 			boost::scoped_ptr<tcp_server_impl>	impl_ptr;
 		};

@@ -12,9 +12,9 @@
 
 #include "asio.hpp"
 #include <boost/noncopyable.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
 #include <boost/function.hpp>
+#include <memory>
 #include "xchar.hpp"
 #include "tcp_session.hpp"
 #include "tcp_client.hpp"
@@ -29,7 +29,7 @@ namespace faith
 
 		class tcp_client_session : public tcp_session< tcp_client_session >
 		{
-			typedef boost::shared_ptr<tcp_client_session>									tcp_client_session_ptr;
+			typedef std::shared_ptr<tcp_client_session>									tcp_client_session_ptr;
 			typedef boost::function<void(unsigned int,const void*,size_t)>					onrecv_handler_type;
 			typedef boost::function<void(unsigned int,tcp_client::e_connect_info,xstring)>	connection_handler_type;
 			enum e_connection_state

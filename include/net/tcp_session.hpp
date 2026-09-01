@@ -24,9 +24,9 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
 #include <boost/detail/atomic_count.hpp>
+#include <memory>
 
 
 #pragma warning(push)
@@ -42,7 +42,7 @@ namespace faith
 		class tcp_session :
 			private boost::noncopyable,
 			private delay_send_session,
-			public boost::enable_shared_from_this<T>
+			public std::enable_shared_from_this<T>
 		{
 			// handler
 			typedef boost::function<void(unsigned int,const void*,size_t)>
@@ -77,13 +77,13 @@ namespace faith
 			void on_packet_received(int packet_count);
 			void read();
 
-			//发送延时数据
+			//???????????
 			void send_delay_data();
-			//异步发送数据
+			//??????????
 			void async_send( const void* data_ptr, size_t data_size );
-			//由于时间到期发送数据
+			//????????????????
 			bool send_data_by_time();
-			//由于大小达到一定数值,发送数据
+			//???????????????,????????
 			bool send_data_by_size();
 
 			boost::asio::ip::tcp::endpoint		m_local_endpoint;
