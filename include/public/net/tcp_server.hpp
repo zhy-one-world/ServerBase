@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/08/19
 	created:	19:8:2014   11:01
 	file base:	tcp_server
@@ -23,9 +23,7 @@ namespace faith
 	namespace net 
 	{
 		class tcp_server_impl;
-		//
 		//	asynchronous TCP server facade
-		// 
 		class tcp_server : private boost::noncopyable
 		{			
 		public:

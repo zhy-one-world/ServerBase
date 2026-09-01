@@ -28,7 +28,7 @@ namespace faith
 				}
 
 				m_options_map.insert(option_item);
-				/*ÒòSchedulerµÄ¹¹Ôìº¯ÊıÀï»áµ÷ÓÃµ½set_optionº¯Êı,ËùÒÔÕâÀï»áÓĞÖØÈëÏÖÏó.gccÏÂµÄboost::call_once»á³öÏÖwaitËÀËø.¹ÊÏÈ×¢ÊÍµô.
+				/*å› Schedulerçš„æ„é€ å‡½æ•°é‡Œä¼šè°ƒç”¨åˆ°set_optionå‡½æ•°,æ‰€ä»¥è¿™é‡Œä¼šæœ‰é‡å…¥ç°è±¡.gccä¸‹çš„boost::call_onceä¼šå‡ºç°waitæ­»é”.æ•…å…ˆæ³¨é‡Šæ‰.
 				*/
 				return true;
 			}

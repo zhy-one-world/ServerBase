@@ -18,14 +18,14 @@ namespace faith
 	{
 		friend class singleton<mem_pool>;
 	public:
-		//���亯�����ص���С�ڴ��ĳ���,�������ĳ���С�ڸ���ֵ,Ҫ����һ��MIN_MEM_BLOCK_SIZE���ڴ��
+		//分配函数返回的最小内存块的长度,如果传入的长度小于该数值,要分配一个MIN_MEM_BLOCK_SIZE的内存块
 		static const int MIN_MEM_BLOCK_SIZE = 8;
-		//���亯���������ڴ�����󳤶ȡ����Ҫ����Ŀ��С����ֵ,��ֱ����new �� delete ���й���
+		//分配函数管理的内存块的最大长度。如果要分配的块大小该数值,则直接用new 与 delete 进行管理
 		static const int MAX_MEM_BLOCK_SIZE = 4*1024*1024;
 
-		//�����ڴ�
+		//分配内存
 		void *	alloc(std::size_t size);
-		//�ͷ��ڴ�
+		//释放内存
 		void	free(void *data,std::size_t size);
 	private:
 		mem_pool();

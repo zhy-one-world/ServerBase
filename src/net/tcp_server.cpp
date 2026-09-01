@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:22
 	file base:	tcp_server
@@ -19,9 +19,7 @@ namespace faith
 {
 	namespace net 
 	{
-		//
 		//	Implemention of TCPServer
-		//
 		tcp_server::tcp_server( 
 			serverstatus_handler_type status_handler,
 			onconnected_handler_type onconnected_handler,

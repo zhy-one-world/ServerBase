@@ -72,7 +72,7 @@ namespace faith
 			return;
 		}
 
-		//下面这个可以根据指定路径触发回调
+		//涓嬮潰杩欎釜鍙互鏍规嵁鎸囧畾璺緞瑙﹀彂鍥炶皟
 		//evhttp_set_cb(m_http, "/dump", dump_request_cb, NULL);
 
 		evhttp_set_gencb(m_http, &http_manager::http_server_global_callback, this);

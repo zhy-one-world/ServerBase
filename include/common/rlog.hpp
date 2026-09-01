@@ -1,4 +1,4 @@
-#ifndef _FAITH_RLOG_HPP_
+﻿#ifndef _FAITH_RLOG_HPP_
 #define _FAITH_RLOG_HPP_
 
 #include <cstddef>

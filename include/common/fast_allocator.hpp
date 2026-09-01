@@ -11,8 +11,8 @@
 #define _FAST_ALLOCATOR_H_
 
 /*
-	���ļ��еķ������ṩ���̰߳�ȫ��std���ڿ��ٷ���,����Ϊ��������Բű�boost::fast_allocator��һЩ��
-	��������̰߳�ȫ�ķ���������ʹ�� boost::fast_allocator
+	本文件中的分配器提供非线程安全的std窗口快速分配,正因为如果，所以才比boost::fast_allocator快一些。
+	如果想用线程安全的分配器，请使用 boost::fast_allocator
 */
 #include <vector>
 namespace faith

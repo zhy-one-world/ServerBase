@@ -15,9 +15,9 @@ namespace faith
 
 
 	typedef boost::function<void(
-		int http_error_code,		// ÓÉ HttpAccessorCodeÖĞ Ã¶¾ÙÖµ¶¨Òå
+		int http_error_code,		// ç”± HttpAccessorCodeä¸­ æšä¸¾å€¼å®šä¹‰
 		const std::string& http_error_info,
-		const std::string& http_result			// htmlÔ´ÎÄ¼ş£¬Ïàµ±ÓÚascii±àÂë´®¡££¨unicode/ansi°æ±¾£©
+		const std::string& http_result			// htmlæºæ–‡ä»¶ï¼Œç›¸å½“äºasciiç¼–ç ä¸²ã€‚ï¼ˆunicode/ansiç‰ˆæœ¬ï¼‰
 		)> http_client_callback_type;
 
 
@@ -30,16 +30,16 @@ namespace faith
 		http_found_headers_map	m_found_headersmap;
 		int						m_req_listen_port;
 		long					m_req_handle_index;
-		int						m_req_type;				//Ã¶¾Ù¼û evhttp_cmd_type
+		int						m_req_type;				//æšä¸¾è§ evhttp_cmd_type
 		std::string				m_req_body;
 
-		//Àı Ä³¿Í»§¶ËÈç´Ë·ÃÎÊ
+		//ä¾‹ æŸå®¢æˆ·ç«¯å¦‚æ­¤è®¿é—®
 		//post to www.url.come/test_path?param1=abc
-		//´ËÊ±
+		//æ­¤æ—¶
 		//m_full_path = www.url.come/test_path?param1=abc
 		//m_path = /test_path
 		//m_query = param1=abc
-		//m_fragment = ÓÃ"#"¸ô¿ªµÄ²ÎÊı²¿·Ö(²»ÔÚÉÏÊöÊÂÀıÖĞ)
+		//m_fragment = ç”¨"#"éš”å¼€çš„å‚æ•°éƒ¨åˆ†(ä¸åœ¨ä¸Šè¿°äº‹ä¾‹ä¸­)
 		std::string					m_full_path;
 		std::string					m_path;
 		std::string					m_query;

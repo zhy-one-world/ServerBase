@@ -12,7 +12,7 @@
 
 
 ///
-/// ÌáÈ¡ÔÂ¹â±¦ºĞÁ÷Ç°µÄÊÂ¼ş¡£ hotbakcupÖĞ£¬Í¨¹ıÊµÏÖËü£¬À´ÇëÇóproxy´úÀí
+/// æå–æœˆå…‰å®ç›’æµå‰çš„äº‹ä»¶ã€‚ hotbakcupä¸­ï¼Œé€šè¿‡å®ç°å®ƒï¼Œæ¥è¯·æ±‚proxyä»£ç†
 ///
 #define TEXT1(z, n, text) text(n)
 #define DEF_FN(N)	\
@@ -25,7 +25,7 @@ namespace faith
 	{
 
 		///
-		/// ÔÂ¹â±¦ºĞÁ÷ÖØ¶¨Ïò½Ó¿Ú£¬½«ÔÂ¹â±¦ºĞÁ÷ ´ÓÎÄ¼ş»òÍøÂçÖĞÌáÇ°
+		/// æœˆå…‰å®ç›’æµé‡å®šå‘æ¥å£ï¼Œå°†æœˆå…‰å®ç›’æµ ä»æ–‡ä»¶æˆ–ç½‘ç»œä¸­æå‰
 		///
 		class IMLB_Reader_Stream
 		{
@@ -34,7 +34,7 @@ namespace faith
 			BOOST_PP_REPEAT(10, TEXT1, DEF_FN)
 
 
-			/// µ±Ç°ÔÂ¹â±¦ºĞ²Ù×÷µÄÁ÷Êı¾İµÄÀàĞÍ£¬Èç callback/calling/sumcheck µÈ
+			/// å½“å‰æœˆå…‰å®ç›’æ“ä½œçš„æµæ•°æ®çš„ç±»å‹ï¼Œå¦‚ callback/calling/sumcheck ç­‰
 			virtual void SetWorkStatus(int status){};
 			virtual int GetWorkStatus(){ return 0; };
 

@@ -186,9 +186,9 @@ namespace faith
 			return ret;
 		}
 	private:
-		const char* m_buffer_begin;	//»º´æ¿ªÊ¼Î»ÖÃ
-		const char* m_buffer_end;	//»º´æ½áÊøÎ»ÖÃ
-		const char* m_buffer_read;	//»º´æ¶ÁÎ»ÖÃ
+		const char* m_buffer_begin;	//ç¼“å­˜å¼€å§‹ä½ç½®
+		const char* m_buffer_end;	//ç¼“å­˜ç»“æŸä½ç½®
+		const char* m_buffer_read;	//ç¼“å­˜è¯»ä½ç½®
 	};
 } // namespace faith
 

@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   18:56
 	file base:	tcp_pak_def
@@ -22,7 +22,6 @@ namespace faith
 	namespace net 
 	{
 		//	TCP Packet Define
-		//
 
 #pragma pack(push,1)
 
@@ -39,9 +38,7 @@ namespace faith
 				//flag[3] = 'g';
 
 				// WARNING:
-				//
 				//		only for little-endian processor now !!!
-				//
 				*((unsigned int*)flag) = 0x67616c66;
 				length = 0;
 				key = 0;
@@ -67,9 +64,7 @@ namespace faith
 #endif//#ifdef _DEBUG
 
 				// WARNING:
-				//
 				//		only for little-endian processor now !!!
-				//
 				return( *((unsigned int*)flag) == 0x67616c66 && length );
 			}
 #endif   

@@ -38,10 +38,10 @@ namespace faith
 		curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, false);
 		curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYHOST, 1);
 
-		//д╛хон╙16384ё╛╩А╣╪жбобтькы╤хбЩ
+		//И╩≤Х╝╓Д╦╨16384О╪▄Д╪ Е╞╪Х┤╢Д╦▀Х╫╫И─÷Е╨╕Ф┘╒
 		curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, (512 * 1024));
 
-		//очкыё╛тщй╠╡╩очкы
+		//И≥░И─÷О╪▄Ф ┌Ф≈╤Д╦█И≥░И─÷
 		//curl_easy_setopt(m_curl, CURLOPT_MAX_RECV_SPEED_LARGE, 100000);
 
 		return true;

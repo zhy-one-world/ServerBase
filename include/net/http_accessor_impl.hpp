@@ -29,8 +29,8 @@ namespace faith
 		{
 			enum
 			{
-				e_init_work_buffer_size			=   16*1024,	//³õÊ¼¹¤×÷»º´æ´óĞ¡(×Ö½Ú)
-				e_max_simultaneous_requests		=	5000,	//×î´ó²¢·¢ÇëÇóÊı,²¢·¢ÇëÇóÖĞ³¬¹ı²¢·¢Á¬½ÓµÄ²¿·Ö»á½øÈëµÈ´ı¶ÓÁĞ
+				e_init_work_buffer_size			=   16*1024,	//åˆå§‹å·¥ä½œç¼“å­˜å¤§å°(å­—èŠ‚)
+				e_max_simultaneous_requests		=	5000,	//æœ€å¤§å¹¶å‘è¯·æ±‚æ•°,å¹¶å‘è¯·æ±‚ä¸­è¶…è¿‡å¹¶å‘è¿æ¥çš„éƒ¨åˆ†ä¼šè¿›å…¥ç­‰å¾…é˜Ÿåˆ—
 			};
 
 			struct request_packet
@@ -77,7 +77,7 @@ namespace faith
 		    work_item*                                          new_work_item();
 			void                                                destroy_work_item(work_item* p_work);
 		private:
-			work_list                                           m_ready_work_list;          //×¼±¸ºÃµÄ¹¤×÷¶ÔÏóÁĞ±í
+			work_list                                           m_ready_work_list;          //å‡†å¤‡å¥½çš„å·¥ä½œå¯¹è±¡åˆ—è¡¨
 			boost::asio::detail::mutex							m_impl_mutex;
 			::faith::unique_id_generator<unsigned int>			m_id_generator;
 			bool												m_running;

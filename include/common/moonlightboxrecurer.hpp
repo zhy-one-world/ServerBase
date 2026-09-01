@@ -45,8 +45,8 @@ namespace faith{
 				const MlbParam &param9=empty
 				);
 
-			/*»ñµÃ½üËÆµÄÔËĞĞÊ±Ê±¼ä´Á
-				¸ÃÊ±¼ä´ÁÊÇÔÚ¼ÇÂ¼Ä£Ê½Ê±¼ÇÏÂµÄµ±Ç°callback¹ı³Ì¿ªÊ¼Ê±µÄÊ±¼ä´Á
+			/*è·å¾—è¿‘ä¼¼çš„è¿è¡Œæ—¶æ—¶é—´æˆ³
+				è¯¥æ—¶é—´æˆ³æ˜¯åœ¨è®°å½•æ¨¡å¼æ—¶è®°ä¸‹çš„å½“å‰callbackè¿‡ç¨‹å¼€å§‹æ—¶çš„æ—¶é—´æˆ³
 			*/
 			boost::int32_t get_approx_runtime_timestamp() const;
 
@@ -65,10 +65,10 @@ namespace faith{
 			bool						m_started;
 
 			simple_binary_iarchive *			m_simple_binary_iarchive;
-			xchar *								m_buffer;				//¶ÁÈ¡ÎÄ¼şËùÓÃ»º´æ
+			xchar *								m_buffer;				//è¯»å–æ–‡ä»¶æ‰€ç”¨ç¼“å­˜
 			boost::uint32_t						m_buffer_size;
-			boost::int32_t						m_running_time;			//ÔËĞĞÊ±Ê±¼ä
-			boost::int32_t						m_running_time_print;	//´òÓ¡ÔËĞĞÊ±Ê±¼ä
+			boost::int32_t						m_running_time;			//è¿è¡Œæ—¶æ—¶é—´
+			boost::int32_t						m_running_time_print;	//æ‰“å°è¿è¡Œæ—¶æ—¶é—´
 
 			IMLB_Reader_Stream	*				m_log_reader;
 

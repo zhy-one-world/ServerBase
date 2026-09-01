@@ -1,4 +1,4 @@
-#include <boost/cstdint.hpp>
+﻿#include <boost/cstdint.hpp>
 #include <sstream>
 #include "mlb.hpp"
 #include "iserializer.hpp"
@@ -10,14 +10,10 @@ namespace faith
 //		{
 //			variables_map::variables_map()
 //			{
-//
 //			}
-//
 //			void variables_map::serialize()
 //			{
-//
 //			}
-//
 //			#define SAVE_VALUE(TYPE,ENUM_NAME)										\
 //			if(val.type()==typeid(TYPE))											\
 //			{																		\
@@ -25,7 +21,6 @@ namespace faith
 //				const TYPE & value = boost::any_cast<const TYPE &>(val);			\
 //				oserializer::getInstance() << type << value;						\
 //			}
-//
 //			static void save_any(const boost::any & val)
 //			{
 //				boost::uint8_t type;
@@ -53,7 +48,6 @@ namespace faith
 //// 					throw_mlb_exception(err.str().c_str());
 //				}
 //			}
-//
 //			#define LOAD_VALUE(TYPE,ENUM_NAME)				\
 //			case OVT_##ENUM_NAME:							\
 //			{												\
@@ -62,7 +56,6 @@ namespace faith
 //				val = value;								\
 //				break;										\
 //			}
-//
 //			static void load_any(boost::any & val)
 //			{
 //				boost::uint8_t type;
@@ -93,14 +86,11 @@ namespace faith
 //// 						throw_mlb_exception(err.str().c_str());
 //					}
 //				}
-//
 //			}
-//
 //			MLB_CLASS_FUNC_0(xstring,variables_map,get_data)
 //			{
 //				typedef std::map<std::string,boost::program_options::variable_value> VAR_MAP;
 //				xstring result;
-//
 //				oserializer::getInstance().reset();
 //				VAR_MAP & var_map = static_cast< VAR_MAP & >(*this);
 //				boost::uint32_t size = var_map.size();
@@ -110,20 +100,17 @@ namespace faith
 //					oserializer::getInstance() << it->first;
 //					save_any(it->second.value());
 //				}
-//
 //				const xchar * buffer;
 //				std::size_t buffer_len;
 //				oserializer::getInstance().get_data(buffer,buffer_len);
 //				result.assign(buffer,buffer_len);
 //				return result;
 //			}
-//			
 //			void variables_map::reset(const xstring &data)
 //			{
 //				typedef std::map<std::string,boost::program_options::variable_value> VAR_MAP;
 //				VAR_MAP & var_map = static_cast< VAR_MAP & >(*this);
 //				var_map.clear();
-//
 //				iserializer::getInstance().set_data(data.c_str(),data.length());
 //				boost::uint32_t size;
 //				iserializer::getInstance() >> size;

@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:02
 	file base:	tcp_client
@@ -28,9 +28,7 @@ namespace faith
 		class tcp_client_impl;
 		class tcp_client_session;
 		typedef std::shared_ptr<tcp_client_session> tcp_client_session_ptr;
-		//
 		//	asynchronous TCP client facade, Singleton class
-		// 
 		class tcp_client : private boost::noncopyable
 		{
 		public:

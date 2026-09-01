@@ -34,9 +34,9 @@ namespace faith
 	public:
 		typedef boost::function<void(
 			uint64_t request_uid,
-			unsigned int http_error_code,		// ÓÉ HttpAccessorCodeÖÐ Ã¶¾ÙÖµ¶¨Òå
+			unsigned int http_error_code,		// ç”± HttpAccessorCodeä¸­ æžšä¸¾å€¼å®šä¹‰
 			const xstring& http_error_info,
-			const xstring& http_result			// htmlÔ´ÎÄ¼þ£¬Ïàµ±ÓÚascii±àÂë´®¡££¨unicode/ansi°æ±¾£©
+			const xstring& http_result			// htmlæºæ–‡ä»¶ï¼Œç›¸å½“äºŽasciiç¼–ç ä¸²ã€‚ï¼ˆunicode/ansiç‰ˆæœ¬ï¼‰
 			)> result_handler_type; 
 
 		bool init();

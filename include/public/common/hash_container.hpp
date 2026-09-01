@@ -1,4 +1,4 @@
-/********************************************************************
+ï»¿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   22:04
 	file base:	hash_container
@@ -10,28 +10,24 @@
 //#ifndef __HASH_CONTAINER_H_
 //#define __HASH_CONTAINER_H_
 
-/* faith::common::hash_map,faith::common::hash_set ¶Ô×Ô¶¨ÒåÀàĞÍÓĞÒÔÏÂÒªÇó£º
-Windows ÉÏµÄ VS2005,VS2008 ÒªÇóÌá¹©
+/* faith::common::hash_map,faith::common::hash_set å¯¹è‡ªå®šä¹‰ç±»å‹æœ‰ä»¥ä¸‹è¦æ±‚ï¼š
+Windows ä¸Šçš„ VS2005,VS2008 è¦æ±‚æä¾›
 operator size_t() const
 bool operator < (const T & o) const
 
-ÔÚ Linux ÉÏ gcc £¬ÒªÇóÌá¹©
+åœ¨ Linux ä¸Š gcc ï¼Œè¦æ±‚æä¾›
 operator size_t() const
 bool operator == (const T & o) const
 */
-//
 //#if defined _MSC_VER
-//
 #include <map>
 #include <set>
-//
 //namespace faith
 //{
 //	namespace common
 //	{
 //		using stdext::hash_set;
 //		using stdext::hash_map;
-//
 //		template <class _Key>
 //		struct hash_traits
 //		{
@@ -48,9 +44,7 @@ bool operator == (const T & o) const
 //		};
 //	}
 //}
-//
 //#elif defined __GNUC__
-//
 //#include <ext/hash_map>
 //#include <ext/hash_set>
 //#include <string>
@@ -67,7 +61,6 @@ bool operator == (const T & o) const
 //				return static_cast<size_t>(o);
 //			}
 //		};
-//
 //		template <>
 //		struct hash<char *>
 //		{
@@ -76,7 +69,6 @@ bool operator == (const T & o) const
 //                return __gnu_cxx::__stl_hash_string(__s);
 //			}
 //		};
-//
 //		template <>
 //		struct hash<const char *>
 //		{
@@ -85,7 +77,6 @@ bool operator == (const T & o) const
 //                return __gnu_cxx::__stl_hash_string(__s);
 //			}
 //		};
-//
 //		template <>
 //		struct hash<std::string>
 //		{
@@ -94,19 +85,15 @@ bool operator == (const T & o) const
 //                return __gnu_cxx::__stl_hash_string(__s);
 //			}
 //		};
-//
 //#if defined(OMP_UNICODE)
-//
 //		inline size_t __stl_hash_wstring(const wchar_t* __s)
 //		{
 //			BOOST_STATIC_ASSERT(sizeof(wchar_t)==2);
 //			size_t __h = 0; 
 //			for ( ; *__s; ++__s)
 //				__h = 5*__h + *__s;
-//
 //			return size_t(__h);
 //		};
-//
 //		template <>
 //		struct hash<wchar_t *>
 //		{
@@ -115,7 +102,6 @@ bool operator == (const T & o) const
 //				return __stl_hash_wstring(__s);
 //			}
 //		};
-//
 //		template <>
 //		struct hash<const wchar_t *>
 //		{
@@ -124,7 +110,6 @@ bool operator == (const T & o) const
 //				return __stl_hash_wstring(__s);
 //			}
 //		};
-//
 //		template <>
 //		struct hash<std::wstring>
 //		{
@@ -134,7 +119,6 @@ bool operator == (const T & o) const
 //			}
 //		};
 //#endif
-//
 //		template <class _Key>
 //		struct hash_traits
 //		{
@@ -148,7 +132,6 @@ bool operator == (const T & o) const
 //				return a == b;
 //			}
 //		};
-//
 //		template <class _Key,class _Traits>
 //		struct equal_from_traits
 //		{
@@ -157,26 +140,19 @@ bool operator == (const T & o) const
 //				return _Traits().equal(a,b);
 //			}
 //		};
-//
 //		template<class _Key, class _Tp, class _Traits  = hash_traits<_Key>,class _Alloc = std::allocator<std::pair<_Key,_Tp> > >
 //		class hash_map:
 //			public __gnu_cxx::hash_map<_Key,_Tp,_Traits,equal_from_traits<_Key,_Traits> , typename _Alloc::template rebind<_Tp>::other >
 //		{
-//
 //		};
 //		template <class _Value, class _Traits  = hash_traits<_Value>,class _Alloc = std::allocator<_Value>  >
 //		class hash_set:
 //			public __gnu_cxx::hash_set<_Value,_Traits,equal_from_traits<_Value,_Traits>,_Alloc>
 //		{
-//
 //		};
 //	}
 //}
-//
 //#else
-//
 //# error "Unknown compiler, only support for msvc and gcc."
-//
 //#endif
-//
 //#endif

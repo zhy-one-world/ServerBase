@@ -263,7 +263,7 @@ namespace faith
 					++exception_count;					
 					if (exception_count == 1)
 					{
-						//Ö»Å×µÚÒ»´Î·¢ÉúÒì³£´¦¡£ÒòÎªÈç¹ûÄ³Ïß³Ì³öÒì³£ÁË£¬ÔÚthrowÖ®Ç°£¬ºóĞøÏß³Ì¼ÌĞø³öµÄÒì³££¬²»ÊÇÒì³£µÄÔ´Í·¡£
+						//åªæŠ›ç¬¬ä¸€æ¬¡å‘ç”Ÿå¼‚å¸¸å¤„ã€‚å› ä¸ºå¦‚æœæŸçº¿ç¨‹å‡ºå¼‚å¸¸äº†ï¼Œåœ¨throwä¹‹å‰ï¼Œåç»­çº¿ç¨‹ç»§ç»­å‡ºçš„å¼‚å¸¸ï¼Œä¸æ˜¯å¼‚å¸¸çš„æºå¤´ã€‚
 					throw;
 				}
 				}
@@ -337,7 +337,7 @@ namespace faith
 			return ret;
 		}
 
-		/* ×ª»¯asio´íÎóÏûÏ¢µ½unicode¡£ asio´íÎóÏûÏ¢ÒÑ½ü±¾µØ»¯ */
+		/* è½¬åŒ–asioé”™è¯¯æ¶ˆæ¯åˆ°unicodeã€‚ asioé”™è¯¯æ¶ˆæ¯å·²è¿‘æœ¬åœ°åŒ– */
 		const xchar * scheduler_impl::asio_message(const std::string & msg)
 		{
 #if defined(FAITH_UNICODE)

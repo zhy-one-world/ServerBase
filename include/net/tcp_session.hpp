@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   18:58
 	file base:	tcp_session
@@ -77,13 +77,9 @@ namespace faith
 			void on_packet_received(int packet_count);
 			void read();
 
-			//???????????
 			void send_delay_data();
-			//??????????
 			void async_send( const void* data_ptr, size_t data_size );
-			//????????????????
 			bool send_data_by_time();
-			//???????????????,????????
 			bool send_data_by_size();
 
 			boost::asio::ip::tcp::endpoint		m_local_endpoint;

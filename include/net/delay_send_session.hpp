@@ -16,7 +16,7 @@ namespace faith
 {
 	namespace net
 	{
-		//ÑÓÊ±·¢ËÍµÄSesson½Ó¿Ú
+		//å»¶æ—¶å‘é€çš„Sessonæ¥å£
 		class delay_send_session
 		{
 			friend class delay_send_queue;
@@ -24,7 +24,7 @@ namespace faith
 			delay_send_session(unsigned int check_interval);
 			virtual ~delay_send_session();
 		public:	
-			//·¢ËÍÑÓÊ±Êı¾İ
+			//å‘é€å»¶æ—¶æ•°æ®
 			virtual void					send_delay_data() = 0;
 		protected:
 			void							unregister_from_delay_queue()
@@ -41,10 +41,10 @@ namespace faith
 				m_next_send_time = m_delay_send_queue.get_loop_counter()+m_check_interval;
 			}
 		private:
-			unsigned int					m_check_interval;	//¼ì²é¼ä¸ô
-			delay_send_loop_counter_type	m_next_send_time;	//ÏÂÒ»´Î¿ÉÒÔ·¢ËÍÊ±¼ä
-			delay_send_list::iterator		m_it;				//ÔÚlistÖĞµÄÎ»ÖÃ
-			static delay_send_queue &		m_delay_send_queue;	//ÎªÓÅ»¯ĞÔÄÜÉèÖÃµÄ»º´æÖ¸Õë
+			unsigned int					m_check_interval;	//æ£€æŸ¥é—´éš”
+			delay_send_loop_counter_type	m_next_send_time;	//ä¸‹ä¸€æ¬¡å¯ä»¥å‘é€æ—¶é—´
+			delay_send_list::iterator		m_it;				//åœ¨listä¸­çš„ä½ç½®
+			static delay_send_queue &		m_delay_send_queue;	//ä¸ºä¼˜åŒ–æ€§èƒ½è®¾ç½®çš„ç¼“å­˜æŒ‡é’ˆ
 		};
 	}
 }

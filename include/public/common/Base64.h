@@ -1,7 +1,7 @@
-/*base_64.hÎÄ¼ş*/
+/*base_64.hæ–‡ä»¶*/
 #pragma once
 /**
-* Base64 ±àÂë/½âÂë
+* Base64 ç¼–ç /è§£ç 
 * @author liruixing
 */
 namespace faith {
@@ -11,7 +11,7 @@ namespace faith {
 		static const char base64_pad = '=';
 	public:
 		/**
-		* ÕâÀï±ØĞëÊÇunsignedÀàĞÍ£¬·ñÔò±àÂëÖĞÎÄµÄÊ±ºò³ö´í
+		* è¿™é‡Œå¿…é¡»æ˜¯unsignedç±»å‹ï¼Œå¦åˆ™ç¼–ç ä¸­æ–‡çš„æ—¶å€™å‡ºé”™
 		*/
 		static std::string Encode(const unsigned char* str, int bytes);
 		static std::string Decode(const char* str, int bytes);

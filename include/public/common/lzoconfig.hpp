@@ -1,5 +1,4 @@
-//	Octopus MMORPG Platform
-//
+﻿//	Octopus MMORPG Platform
 //	Copyright(c) by NineYou Information technology(Shanghai) Co., Ltd.
 //	Created by Zhang Yongbo, 2008
 

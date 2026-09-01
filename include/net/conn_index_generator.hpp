@@ -64,8 +64,8 @@ namespace faith
 			}
 
 		private:
-			::faith::unique_id_generator<boost::uint16_t>	m_generator;	//Éú³ÉÆ÷
-			boost::uint16_t										m_next_serial;	//ÏÂÒ»¸öĞòÁĞºÅ
+			::faith::unique_id_generator<boost::uint16_t>	m_generator;	//ç”Ÿæˆå™¨
+			boost::uint16_t										m_next_serial;	//ä¸‹ä¸€ä¸ªåºåˆ—å·
 		};
 	}
 }

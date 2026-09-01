@@ -64,9 +64,9 @@ namespace faith
 					-- m_current_count;
 				}
 			private:
-				void**			m_data;				//Ö¸ÕëÊı×é
-				unsigned int	m_total_count;		//×ÜÊı
-				unsigned int	m_current_count;	//µ±Ç°¼ÆÊı
+				void**			m_data;				//æŒ‡é’ˆæ•°ç»„
+				unsigned int	m_total_count;		//æ€»æ•°
+				unsigned int	m_current_count;	//å½“å‰è®¡æ•°
 			};
 
 			template<unsigned int size>
@@ -147,10 +147,10 @@ namespace faith
 			};
 		}
 
-		//(³¤¶È,Ë÷Òı)Êı×é
+		//(é•¿åº¦,ç´¢å¼•)æ•°ç»„
 		static int size_index_map[4][256];
 
-		//Ê¹ÓÃÏÂÒ»¸ömem_poolÏîÄ¿
+		//ä½¿ç”¨ä¸‹ä¸€ä¸ªmem_poolé¡¹ç›®
 		static void use_mem_pool_item(unsigned int & mem_pool_index,unsigned int &mem_pool_alloc_size)
 		{
 			++mem_pool_index;
@@ -165,7 +165,7 @@ namespace faith
 			}
 		}
 
-		//³õÊ¼»¯Ë÷Òı¼¯ºÏ
+		//åˆå§‹åŒ–ç´¢å¼•é›†åˆ
 		static void init_size_index_map()
 		{
 			unsigned int mem_pool_index=0;
@@ -189,7 +189,7 @@ namespace faith
 			}
 		}
 
-		//»ñµÃ¸ù±¾Êı×éË÷Òı
+		//è·å¾—æ ¹æœ¬æ•°ç»„ç´¢å¼•
 		static int get_pool_index(std::size_t size)
 		{
 			if(size > mem_pool::MAX_MEM_BLOCK_SIZE)
@@ -206,8 +206,8 @@ namespace faith
 				s = size;
 			}
 
-			//¾¯¸æ£º½öÓÃÓÚIntelÓëAMD CPU
-			s -=1;	//½«³¤¶È-1ÓÃÓÚÒÔÏÂ²éÑ¯Ëã·¨
+			//è­¦å‘Šï¼šä»…ç”¨äºIntelä¸AMD CPU
+			s -=1;	//å°†é•¿åº¦-1ç”¨äºä»¥ä¸‹æŸ¥è¯¢ç®—æ³•
 
 			const unsigned char * size_bytes = reinterpret_cast<const unsigned char *>(&size);
 			for(int bytes_index=3;bytes_index>=0;--bytes_index)

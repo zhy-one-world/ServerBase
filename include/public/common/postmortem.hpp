@@ -1,4 +1,4 @@
-/********************************************************************
+ï»¿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   14:36
 	file base:	postmortem
@@ -18,12 +18,9 @@
 namespace faith 
 {
 		class postmortem_impl;
-		//
 		//	Postmortem class, Singleton class
-		//	
 		//	Warning:
-		//		ÎŞ·¨ÔÚÒ»¸öµ÷ÊÔÆ÷ÄÚµ÷ÊÔ´ËÄ£¿é¹¦ÄÜ£¬ÒòÎªÒì³£»á±»µ÷ÊÔÆ÷²¶»ñ
-		//
+		//		æ— æ³•åœ¨ä¸€ä¸ªè°ƒè¯•å™¨å†…è°ƒè¯•æ­¤æ¨¡å—åŠŸèƒ½ï¼Œå› ä¸ºå¼‚å¸¸ä¼šè¢«è°ƒè¯•å™¨æ•è·
 		class postmortem : public singleton<postmortem>
 		{
 		public:
@@ -35,20 +32,20 @@ namespace faith
 		public:
 			//	Name:	Init
 			//	Param:
-			//			dumpfile_prefix		dump ÎÄ¼şÃûÇ°×º
-			//			exec_afterdump		dump ºóÖ´ĞĞÃüÁî
-			//			dump_type			dump ÀàĞÍ,Éú³ÉĞÅÏ¢µÄÄÚÈİ
-			//			use_dump_callback	Ê¹ÓÃ»Øµ÷º¯Êı¹ıÂËÎŞÓÃµÄÄ£¿é,Ä¿Ç°Ö»±£´æÖ÷Ä£¿éµÄdumpĞÅÏ¢.
+			//			dumpfile_prefix		dump æ–‡ä»¶åå‰ç¼€
+			//			exec_afterdump		dump åæ‰§è¡Œå‘½ä»¤
+			//			dump_type			dump ç±»å‹,ç”Ÿæˆä¿¡æ¯çš„å†…å®¹
+			//			use_dump_callback	ä½¿ç”¨å›è°ƒå‡½æ•°è¿‡æ»¤æ— ç”¨çš„æ¨¡å—,ç›®å‰åªä¿å­˜ä¸»æ¨¡å—çš„dumpä¿¡æ¯.
 			bool								init( xstring dumpfile_prefix,xstring exec_afterdump, int dump_type = 1, bool use_dump_callback = true);
 			void								release(	);			
-			void								register_extern_callback( cb_t handler, xchar * desc );	// Desc:	×¢²áÒì³£ºó»Øµ÷´¦Àí
+			void								register_extern_callback( cb_t handler, xchar * desc );	// Desc:	æ³¨å†Œå¼‚å¸¸åå›è°ƒå¤„ç†
 
 		private:
 			boost::scoped_ptr<postmortem_impl>	m_impl_ptr;
 		};
 
 #ifdef _WIN32
-		/// stack overflow ×¨ÓÃ
+		/// stack overflow ä¸“ç”¨
 		extern struct _EXCEPTION_POINTERS * g_stackoverflow_except;
 		bool dump_stackoverflow();
 

@@ -1,4 +1,4 @@
-/********************************************************************
+ï»¿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   14:34
 	file base:	postmortem_impl_win32
@@ -37,8 +37,8 @@ namespace faith
 			);
 
 		/*
-		DumpĞÅÏ¢µÄ¸ß¼¶¹ıÂË.ÒÔÏÂMiniDumpCallbackºÍIsDataSectionNeededº¯ÊıÊµÏÖÁË,Ö»±£´æ³ÌĞòÖ÷Ä£¿éµÄdumpĞÅÏ¢µÄ¹¦ÄÜ.
-		Ê¹ÓÃÕß¿É¸ù¾İ×Ô¼ºµÄĞèÒªÔö¼Ó»ò¼õÉÙdump±£´æµÄĞÅÏ¢.
+		Dumpä¿¡æ¯çš„é«˜çº§è¿‡æ»¤.ä»¥ä¸‹MiniDumpCallbackå’ŒIsDataSectionNeededå‡½æ•°å®ç°äº†,åªä¿å­˜ç¨‹åºä¸»æ¨¡å—çš„dumpä¿¡æ¯çš„åŠŸèƒ½.
+		ä½¿ç”¨è€…å¯æ ¹æ®è‡ªå·±çš„éœ€è¦å¢åŠ æˆ–å‡å°‘dumpä¿å­˜çš„ä¿¡æ¯.
 		*/
 
 		inline BOOL is_module_needed(const WCHAR* pModuleName)
@@ -80,9 +80,7 @@ namespace faith
 			return FALSE;
 		}
 
-		//	
 		//	exception handler
-		//
 		LONG WINAPI top_level_filter( struct _EXCEPTION_POINTERS *pExceptionInfo )
 		{
 			static LONG retval; retval = EXCEPTION_CONTINUE_SEARCH;
@@ -93,9 +91,7 @@ namespace faith
 			static HMODULE hDll; hDll = NULL;
 			static TCHAR szDbgHelpPath[_MAX_PATH];
 
-			//
-			//	Ê×ÏÈÔÚ½ø³Ìµ±Ç°Â·¾¶Ñ°ÕÒ dbghelp.dll
-			//
+			//	é¦–å…ˆåœ¨è¿›ç¨‹å½“å‰è·¯å¾„å¯»æ‰¾ dbghelp.dll
 			if (::GetModuleFileName( NULL, szDbgHelpPath, _MAX_PATH ))
 			{
 				static TCHAR *pSlash; pSlash = _tcsrchr( szDbgHelpPath, _T('\\') );
@@ -106,9 +102,7 @@ namespace faith
 				}
 			}
 
-			//
-			//	ÔÙÊ¹ÓÃÏµÍ³µÄÈ±Ê¡Â·¾¶Ñ°ÕÒ dbghelp.dll
-			//
+			//	å†ä½¿ç”¨ç³»ç»Ÿçš„ç¼ºçœè·¯å¾„å¯»æ‰¾ dbghelp.dll
 			if (hDll==NULL)
 			{
 				// load any version we can
@@ -119,9 +113,7 @@ namespace faith
 			static TCHAR	szDumpPath[ _MAX_PATH ];
 			static TCHAR	szScratch [ _MAX_PATH ];
 
-			//
-			//	ÕÒµ½ dll
-			//
+			//	æ‰¾åˆ° dll
 			if (hDll)
 			{
 				static mini_dump_write_dump pDump; pDump = (mini_dump_write_dump)::GetProcAddress( hDll, "MiniDumpWriteDump" );
@@ -136,7 +128,7 @@ namespace faith
 					// don't ask user
 					// ask the user if they want to save a dump file
 // 					if ( Postmortem_impl::m_exec_afterdump.length() != 0 ||
-// 						::MessageBox( NULL,_T("WARNING: An exception occured,save the dump file to debug it£¿"),_T("Postmortem Module"), MB_YESNO )==IDYES )
+// 						::MessageBox( NULL,_T("WARNING: An exception occured,save the dump file to debug itï¼Ÿ"),_T("Postmortem Module"), MB_YESNO )==IDYES )
 					{
 						// create the file
 						static HANDLE hFile; hFile = ::CreateFile( szDumpPath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
@@ -233,7 +225,7 @@ namespace faith
 			::VirtualQuery(lpPage, &mi, sizeof(mi));
 
 			// Go to page beyond current page
-			allocsize = ((TEMP_ALLOC_STACK_SIZE+si.dwPageSize-1) / si.dwPageSize) * si.dwPageSize; //< ÖÁÉÙ·ÖÅäTEMP_ALLOC_STACK_SIZE´óĞ¡,µ«±ØĞëÊÇpagesizeµÄ±¶Êı
+			allocsize = ((TEMP_ALLOC_STACK_SIZE+si.dwPageSize-1) / si.dwPageSize) * si.dwPageSize; //< è‡³å°‘åˆ†é…TEMP_ALLOC_STACK_SIZEå¤§å°,ä½†å¿…é¡»æ˜¯pagesizeçš„å€æ•°
 			lpPage = (LPBYTE)(mi.BaseAddress) - allocsize ;
 			actPage = (LPBYTE)::VirtualAlloc(lpPage, allocsize ,MEM_COMMIT,PAGE_READWRITE );
 			if (!actPage)
@@ -283,7 +275,7 @@ lb_return: ;
 			_g_cbs_desc_.push_back(desc);
 		}
 
-		/// Ö´ĞĞËùÓĞ±»×¢²áµÄ£¬ÓÃÓÚ·ÇÕı³£¹Ø±ÕÊ±µÄ´¦Àí
+		/// æ‰§è¡Œæ‰€æœ‰è¢«æ³¨å†Œçš„ï¼Œç”¨äºéæ­£å¸¸å…³é—­æ—¶çš„å¤„ç†
 		static void call_cb()
 		{
 			for(unsigned int i = 0; i < s_cbs.size(); ++i)
@@ -324,7 +316,7 @@ lb_return: ;
 		}
 
 
-		// Desc : Æ½Ê±¿ØÖÆÌ¨¹Ø±ÕÊ±£¬Êô·ÇÕı³£ÍË³öÁ÷³Ì¡£
+		// Desc : å¹³æ—¶æ§åˆ¶å°å…³é—­æ—¶ï¼Œå±éæ­£å¸¸é€€å‡ºæµç¨‹ã€‚
 		static BOOL WINAPI common_console_handler(DWORD CEvent)
 		{
 			SetConsoleCtrlHandler((PHANDLER_ROUTINE)common_console_handler,FALSE);
@@ -348,7 +340,7 @@ lb_return: ;
 
 			::SetUnhandledExceptionFilter( handled_exception );
 
-			/// ÉèÖÃ¿ØÖÆÌ¨¹Ø±ÕÊ±µÄ´¦Àí¾ä±ú
+			/// è®¾ç½®æ§åˆ¶å°å…³é—­æ—¶çš„å¤„ç†å¥æŸ„
 			::SetConsoleCtrlHandler((PHANDLER_ROUTINE)common_console_handler,TRUE);
 
 			return true;

@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:22
 	file base:	tcp_server_session
@@ -19,9 +19,7 @@ namespace faith
 {
 	namespace net 
 	{
-		//
 		//	Implemention of TCPServerSession
-		//
 		tcp_server_session::tcp_server_session(
 			unsigned int connindex,
 			unsigned int thread_id,

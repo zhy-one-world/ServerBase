@@ -1,5 +1,4 @@
-//	Octopus MMORPG Platform
-//
+ï»¿//	Octopus MMORPG Platform
 //	Copyright(c) by NineYou Information technology(Shanghai) Co., Ltd.
 //	created by Zhang Yongbo, 2008
 
@@ -313,7 +312,7 @@ namespace faith {
 				return !(*this==o);
 			}
 
-			//ÔÊĞíÖ±½ÓĞŞ¸ÄÄÚ²¿Öµ£¬ÎªĞòÁĞ»¯×¼±¸
+			//å…è®¸ç›´æ¥ä¿®æ”¹å†…éƒ¨å€¼ï¼Œä¸ºåºåˆ—åŒ–å‡†å¤‡
 			inline char & which()
 			{
 				return m_which;

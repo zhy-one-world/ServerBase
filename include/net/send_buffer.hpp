@@ -153,7 +153,7 @@ namespace faith
 				}
 			}
 			
-			//È¡³ö¿ÉÒÔ·¢ËÍµÄÀÛ»ıµÄÊı¾İ
+			//å–å‡ºå¯ä»¥å‘é€çš„ç´¯ç§¯çš„æ•°æ®
 			void*							nagle_data(unsigned int & size) const
 			{
 				if(m_total_size == 0)
@@ -163,7 +163,7 @@ namespace faith
 				else
 				{
 					if(m_end > m_begin)
-					{//Õı³£Çé¿ö£¬ÅĞ¶ÏÊı¾İ°ü´óĞ¡
+					{//æ­£å¸¸æƒ…å†µï¼Œåˆ¤æ–­æ•°æ®åŒ…å¤§å°
 						if(m_total_size >= m_delaysending_size_threshold)
 						{
 							size = m_total_size;
@@ -174,7 +174,7 @@ namespace faith
 						}
 					}
 					else
-					{//»ØÈÆ²úÉúÊ±£¬²»×÷¼ì²â
+					{//å›ç»•äº§ç”Ÿæ—¶ï¼Œä¸ä½œæ£€æµ‹
 						size = m_buffer_tail - m_begin;
 					}
 					return m_begin;

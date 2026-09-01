@@ -1,4 +1,4 @@
-/********************************************************************
+Ôªø/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   20:38
 	file base:	singleton
@@ -12,9 +12,7 @@
 
 #include <boost/utility.hpp>
 //#include <boost/thread/once.hpp>
-//
 //	*** COPY FROM *** http://www.boostcookbook.com/Recipe:/1235044
-//
 
 // Warning: If T's constructor throws, instance() will return a null reference.
 
@@ -108,7 +106,7 @@ private:
 #include <boost/thread/mutex.hpp>
 #include <iostream>
 
-#include °∞myclass.hpp°±
+#include ‚Äúmyclass.hpp‚Äù
 
 void test()
 { 

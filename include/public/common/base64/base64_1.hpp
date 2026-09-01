@@ -14,7 +14,7 @@ namespace faith
 			int iSrcSize, 
 			int iMaxSizeToRead = 0);
 
-		//stBytesWritten:传入目标buffer的大小，传出实际使用大小
+		//stBytesWritten:浼犲叆鐩爣buffer鐨勫ぇ灏忥紝浼犲嚭瀹為檯浣跨敤澶у皬
 		static bool decode(
 			void* pvDestBinaryBuffer, 
 			const char* pcSrcBase64Ascii,

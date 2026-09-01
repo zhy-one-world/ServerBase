@@ -102,7 +102,7 @@ namespace faith
 		FD_ZERO(&fdwrite);
 		FD_ZERO(&fdexcep);
 
-		// »ñÈ¡ÎÄ¼şÃèÊö·û¼¯fd_set
+		// è·å–æ–‡ä»¶æè¿°ç¬¦é›†fd_set
 		int maxfd = -1;
 		CURLMcode mc = curl_multi_fdset(m_curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
 		if (mc != CURLM_OK)
@@ -118,7 +118,7 @@ namespace faith
 		}
 		else
 		{
-			// select³¬Ê±Ê±¼ä
+			// selectè¶…æ—¶æ—¶é—´
 			struct timeval timeout;
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 1000;
@@ -132,7 +132,7 @@ namespace faith
 				//FAITH_LOG_ERROR(scheduler::getInstance().get_logger(),_XTEXT("select error : -1"));
 			}
 		}
-		//Ö´ĞĞ
+		//æ‰§è¡Œ
 		int running_handles = 0;
 		while (curl_multi_perform(m_curlm, &running_handles) == CURLM_CALL_MULTI_PERFORM);
 
@@ -306,7 +306,7 @@ namespace faith
 		else if (events & BEV_EVENT_ERROR)
 			printf("some other error\n");
 
-		//Õâ½«×Ô¶¯closeÌ×½Ó×ÖºÍfree¶ÁĞ´»º³åÇø  
+		//è¿™å°†è‡ªåŠ¨closeå¥—æ¥å­—å’Œfreeè¯»å†™ç¼“å†²åŒº  
 		bufferevent_free(bev);
 	}
 

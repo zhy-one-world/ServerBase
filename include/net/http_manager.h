@@ -30,13 +30,13 @@ namespace faith
 		void					stop_server_run();
 
 	public:
-		//---------------------------------------对外部分---------------------------------------
+		//---------------------------------------瀵瑰閮ㄥ垎---------------------------------------
 
 		long					async_request(const std::string& url, std::vector<std::string>& head_list, const std::string& params, http_client_callback_type handler, e_http_request_type request_type);
 		bool					start_listen(int listen_port, http_server_callback_type call_back, const std::string& only_this_ip = "0.0.0.0");
 		void					repose_client_req(int target_port, long handle_index, const std::string& repose_body);
 
-		//---------------------------------------对外部分---------------------------------------
+		//---------------------------------------瀵瑰閮ㄥ垎---------------------------------------
 	public:
 		static size_t			curl_writefunc(void *ptr, size_t size, size_t nmemb, void *stream);
 		void					do_read();

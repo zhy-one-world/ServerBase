@@ -1,6 +1,4 @@
-//
-//	most of below code was borrowed from 'pion lib'
-//
+﻿//	most of below code was borrowed from 'pion lib'
 
 #ifndef __FTH_LOGGER_HEADER__
 #define __FTH_LOGGER_HEADER__

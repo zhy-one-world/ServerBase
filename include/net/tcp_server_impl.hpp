@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:09
 	file base:	tcp_server_impl
@@ -47,9 +47,7 @@ namespace faith
 
 		class scheduler_impl;
 
-		//
 		//	asynchronous TCP server implemention
-		// 
 		class tcp_server_impl : public options_container, private boost::noncopyable
 		{
 			enum

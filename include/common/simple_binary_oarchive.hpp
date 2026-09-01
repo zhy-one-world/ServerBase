@@ -40,7 +40,7 @@ namespace faith
 	// preserve correct static polymorphism.
 	class  simple_binary_oarchive
 	{
-		static const int mem_block_size = 4 * 1024;  //Ò»´ÎÔö³¤µÄÄÚ´æ·ÖÅäÊıÁ¿
+		static const int mem_block_size = 4 * 1024;  //ä¸€æ¬¡å¢é•¿çš„å†…å­˜åˆ†é…æ•°é‡
 	public:
 		typedef boost::mpl::bool_<false> is_loading;
 		typedef boost::mpl::bool_<true> is_saving;
@@ -90,7 +90,7 @@ namespace faith
 		{
 			char* end = m_buffer_write + sizeof(T);
 			if (end > m_buffer_end)
-			{//ĞèÒªÖØĞÂ·ÖÅäÄÚ´æ
+			{//éœ€è¦é‡æ–°åˆ†é…å†…å­˜
 				size_t old_data_size = m_buffer_write - m_buffer_begin;
 				size_t new_buffer_size = ((end - m_buffer_begin - 1) / mem_block_size + 1) * mem_block_size;
 				char* new_buffer = new char[new_buffer_size];
@@ -177,7 +177,7 @@ namespace faith
 			return *this;
 		}
 
-		//²éÑ¯½Ó¿Ú
+		//æŸ¥è¯¢æ¥å£
 		inline const char* str() const
 		{
 			return m_buffer_begin;
@@ -196,7 +196,7 @@ namespace faith
 		{
 			char* end = m_buffer_write + count;
 			if (end > m_buffer_end)
-			{//ĞèÒªÖØĞÂ·ÖÅäÄÚ´æ
+			{//éœ€è¦é‡æ–°åˆ†é…å†…å­˜
 				size_t old_data_size = m_buffer_write - m_buffer_begin;
 				size_t new_buffer_size = ((end - m_buffer_begin - 1) / mem_block_size + 1) * mem_block_size;
 				char* new_buffer = new char[new_buffer_size];
@@ -214,9 +214,9 @@ namespace faith
 			}
 		}
 	private:
-		char* m_buffer_begin;	//»º³åÇø¿ªÊ¼Î»ÖÃ
-		char* m_buffer_end;	//»º³åÇø½áÊøÎ»ÖÃ
-		char* m_buffer_write;	//»º³åÇøĞ´Î»ÖÃ
+		char* m_buffer_begin;	//ç¼“å†²åŒºå¼€å§‹ä½ç½®
+		char* m_buffer_end;	//ç¼“å†²åŒºç»“æŸä½ç½®
+		char* m_buffer_write;	//ç¼“å†²åŒºå†™ä½ç½®
 	};
 } // namespace faith
 

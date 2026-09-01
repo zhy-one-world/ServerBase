@@ -22,8 +22,8 @@ namespace faith
 	{
 		class delay_send_session;
 		typedef std::list<delay_send_session *,::faith::fast_allocator<delay_send_session *> >	delay_send_list;
-		//@warning:ÊÜÊµÏÖÏŞÖÆ,¸ÃÀàĞÍ×î¶àÔÚ994Ììºó»á²úÉú»ØÈÆ
-		typedef boost::uint32_t																	delay_send_loop_counter_type;	//ÑÓÊ±·¢ËÍÑ­»·¼ÆÊıÆ÷ÀàĞÍ
+		//@warning:å—å®ç°é™åˆ¶,è¯¥ç±»å‹æœ€å¤šåœ¨994å¤©åä¼šäº§ç”Ÿå›ç»•
+		typedef boost::uint32_t																	delay_send_loop_counter_type;	//å»¶æ—¶å‘é€å¾ªç¯è®¡æ•°å™¨ç±»å‹
 
 		class delay_send_queue : public ::faith::singleton<delay_send_queue>
 		{
@@ -31,8 +31,8 @@ namespace faith
 		private:
 			delay_send_queue();
 		public:
-			void								init();		//³õÊ¼»¯,´´½¨¼ÆÊ±Æ÷
-			void								release();		//Çå³ı,É¾³ı¼ÆÊ±Æ÷
+			void								init();		//åˆå§‹åŒ–,åˆ›å»ºè®¡æ—¶å™¨
+			void								release();		//æ¸…é™¤,åˆ é™¤è®¡æ—¶å™¨
 			void								add_session(delay_send_session * session);
 			void								remove_session(delay_send_session * session);			
 			delay_send_loop_counter_type		get_loop_counter() const
@@ -42,12 +42,12 @@ namespace faith
 		private:
 			void								update(unsigned int timer_index);	
 		public:
-			static const unsigned int			timer_interval = 20;		//¼ÆÊ±Æ÷¼ä¸ôÊ±¼ä
+			static const unsigned int			timer_interval = 20;		//è®¡æ—¶å™¨é—´éš”æ—¶é—´
 		private:
-			boost::detail::lightweight_mutex	m_mutex;			//¶ÔÏó·ÃÎÊËø
-			delay_send_loop_counter_type		m_loop_counter;		//Ñ­»·¼ÆÊı
-			delay_send_list						m_session_list;		//sessonÁĞ±í
-			unsigned int						m_timer_index;		//¼ÆÊ±Æ÷Ë÷Òı
+			boost::detail::lightweight_mutex	m_mutex;			//å¯¹è±¡è®¿é—®é”
+			delay_send_loop_counter_type		m_loop_counter;		//å¾ªç¯è®¡æ•°
+			delay_send_list						m_session_list;		//sessonåˆ—è¡¨
+			unsigned int						m_timer_index;		//è®¡æ—¶å™¨ç´¢å¼•
 		};
 	}
 }

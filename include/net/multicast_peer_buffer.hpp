@@ -61,7 +61,7 @@ namespace faith
                     {
                     }
 					else if( iHeadFreeLen>uLen)
-                    {//ÕâÀïµ÷Í·ÁË
+                    {//è¿™é‡Œè°ƒå¤´äº†
                         m_pre_pos_tail = m_pos_tail;
                         m_pos_tail    = 0;
                     }
@@ -100,7 +100,7 @@ namespace faith
 			unsigned int    m_pos_head;
 			unsigned int    m_pos_tail;
 			unsigned int    m_buf_size;
-			unsigned int    m_pre_pos_tail; //ÊÇ·ñÓ¦¸ÃµôÍ·
+			unsigned int    m_pre_pos_tail; //æ˜¯å¦åº”è¯¥æ‰å¤´
         };
 
         class send_buffer : public buffer_base

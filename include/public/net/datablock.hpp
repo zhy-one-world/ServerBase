@@ -19,8 +19,8 @@ namespace faith
 	{
 		typedef std::pair
 		<
-			const void *,	//data_ptr	数据指针
-			size_t			//data_len	数据大小
+			const void *,	//data_ptr	鏁版嵁鎸囬拡
+			size_t			//data_len	鏁版嵁澶у皬
 		> datablock_type;
 
 		typedef std::deque< datablock_type, fast_allocator<datablock_type> > datablock_queue_type;

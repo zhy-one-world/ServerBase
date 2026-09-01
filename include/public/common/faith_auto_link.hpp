@@ -1,4 +1,4 @@
- /*
+﻿ /*
   *   DESCRIPTION: Automatic library inclusion for Microsoft compilers.
   */
 
@@ -65,9 +65,7 @@ FAITH_LIB_RTL_OPT:   for c/cpp run-time library
 #  define FAITH_LIB_DEBUG_OPT "release"
 #endif
 
-//
 // now include the lib:
-//
 #if defined(FAITH_LIB_NAME) \
       && defined(FAITH_LIB_RTL_OPT) \
       && defined(FAITH_LIB_DEBUG_OPT)
@@ -87,9 +85,7 @@ FAITH_LIB_RTL_OPT:   for c/cpp run-time library
 #	pragma message ("Linking to lib file: " FAITH_LIB_NAME "_" FAITH_LIB_RTL_OPT "_" FAITH_LIB_DEBUG_OPT ".lib")
 #endif
 
-//
 // finally undef any macros we may have set:
-//
 #if defined(FAITH_LIB_NAME)
 #  undef FAITH_LIB_NAME
 #endif
