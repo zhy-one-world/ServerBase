@@ -13,6 +13,7 @@
 #include <iostream>
 #include <list>
 #include <deque>
+#include <mutex>
 
 namespace faith
 {
@@ -57,6 +58,7 @@ namespace faith
 			free_chunk_list	m_free_list;
 			block_list		m_block_list;
 			memory_block*	m_current_block;
+			mutable std::mutex m_mutex;
 		};
 
 		inline unsigned int memory_pool::get_requested_size() {return m_chunk_size;}

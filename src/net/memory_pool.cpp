@@ -104,6 +104,7 @@ namespace faith
 
 		void* memory_pool::malloc()
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			void* pChunk = NULL;
 			if (!m_free_list.empty())
 			{
@@ -140,6 +141,7 @@ namespace faith
 				return;
 			}
 
+			std::lock_guard<std::mutex> lock(m_mutex);
 			m_free_list.push_back(chunk);
 		}
 	}

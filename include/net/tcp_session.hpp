@@ -278,9 +278,7 @@ namespace faith
 			}
 			if(packet_count > 0)
 			{
-				scheduler::getInstance().get_impl()->inner_post(
-                    boost::bind(&T::on_packet_received, this->shared_from_this(), packet_count)
-					);
+				on_packet_received(packet_count);
 			}
 		}
 
@@ -536,9 +534,7 @@ namespace faith
 			for(int i = 0;i< packet_count;++i)
 			{
 				packet_data = m_recv_buf.get_head_packet(packet_size);
-				recvbuf_lock.unlock();
-				m_recv_handler( m_conn_index,packet_data,packet_size);
-				recvbuf_lock.lock();
+				m_recv_handler(m_conn_index, packet_data, packet_size);
 				m_recv_buf.pop_head_packet();
 			}
 			read();
