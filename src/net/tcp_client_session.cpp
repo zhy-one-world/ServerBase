@@ -19,7 +19,6 @@ namespace faith
 	namespace net 
 	{
 		tcp_client_session::tcp_client_session( 
-			unsigned int conn_index,
 			const xstring& host,const xstring& service,
 			boost::asio::io_service& io_service,
 			boost::asio::io_context::strand& strand,
@@ -30,7 +29,7 @@ namespace faith
 			recv_buffer_pool_type & recv_buffer_pool
 			):
 			tcp_session<tcp_client_session>(
-				conn_index,io_service,
+				io_service,
 				handler_recv,
 				option,
 				send_buffer_pool,

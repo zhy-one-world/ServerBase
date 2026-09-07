@@ -1,4 +1,4 @@
-﻿/********************************************************************
+/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:22
 	file base:	tcp_server_session
@@ -21,7 +21,6 @@ namespace faith
 	{
 		//	Implemention of TCPServerSession
 		tcp_server_session::tcp_server_session(
-			unsigned int connindex,
 			unsigned int thread_id,
 			boost::asio::io_service &io_service,
 			recv_handler_type handler_recv,
@@ -29,7 +28,7 @@ namespace faith
 			send_buffer_pool_type & send_buffer_pool,
 			recv_buffer_pool_type & recv_buffer_pool
 			):
-			tcp_session<tcp_server_session>(connindex,io_service,handler_recv,option,send_buffer_pool,recv_buffer_pool)
+			tcp_session<tcp_server_session>(io_service,handler_recv,option,send_buffer_pool,recv_buffer_pool)
 			,m_thread_id(thread_id)
  		{				
 		}

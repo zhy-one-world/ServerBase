@@ -45,11 +45,11 @@ namespace faith
 			public std::enable_shared_from_this<T>
 		{
 			// handler
-			typedef boost::function<void(unsigned int,const void*,size_t)>
+			typedef boost::function<void(const void*,size_t)>
 				recv_handler_type;
 			typedef boost::function<void(unsigned int,int)>
 				plugin_removed_handler_type;
-			typedef boost::function<void(unsigned int)>
+			typedef boost::function<void()>
 				close_handler_type;
 
 			recv_handler_type			m_recv_handler;				// invoke it while get packet
@@ -58,7 +58,6 @@ namespace faith
 
 			boost::asio::ip::tcp::socket	m_socket;
 
-			unsigned int			m_conn_index;			//	connection index
 			bool					m_been_opened;			//	true if the socket had been opened
 			bool					m_is_use;			//	true if the socket had been opened
 
@@ -91,7 +90,6 @@ namespace faith
 		public:
 			
 			tcp_session(
-				unsigned int connindex,
 				boost::asio::io_service &io_service,
 				recv_handler_type handler_recv,
 				tcp_session_option & option,
@@ -100,8 +98,6 @@ namespace faith
 				);
 			void	init_data();
 			boost::asio::ip::tcp::socket&	get_socket()		{	return m_socket;	}
-			inline unsigned int		get_conn_index() { return m_conn_index; }
-			inline void				set_conn_index(unsigned int conn_index) { m_conn_index = conn_index; }
 			inline bool				get_data_use() { return m_is_use; }
 			inline void				set_data_use(bool is_use) { m_is_use = is_use; }
 			inline void				set_close_handler(close_handler_type handler) { m_close_handler = handler; }
@@ -119,14 +115,12 @@ namespace faith
 
 		template < typename T >
 		tcp_session<T>::tcp_session(
-			unsigned int connindex,
 			boost::asio::io_service &io_service,
 			recv_handler_type handler_recv,
 			tcp_session_option & option,
 			send_buffer_pool_type & send_buffer_pool,
 			recv_buffer_pool_type & recv_buffer_pool
 			):
-			m_conn_index(connindex),
 			m_socket(io_service),
 			m_recv_handler(handler_recv),
 			m_recv_buf(option.recv_buffer_size,option.max_packet_size,recv_buffer_pool),
@@ -249,7 +243,7 @@ namespace faith
 				{
 					if (m_been_opened && m_close_handler)
 					{
-						m_close_handler(m_conn_index);
+						m_close_handler();
 					}
 				}
 				return;
@@ -267,12 +261,11 @@ namespace faith
 			if(packet_count == -1)
 			{				
 				std::cout << _XTEXT("TCPSession::handle_read() invalid packet-header received!") << _XTEXT("\n\t")
-					<< _XTEXT("conn_index:") << get_conn_index() << _XTEXT("\n\t")
 					<< _XTEXT(" local ip addr:(") << m_local_endpoint.address().to_string().c_str() << _XTEXT(",") << m_local_endpoint.port() << _XTEXT(")") << _XTEXT("\n\t")
 					<< _XTEXT(" remote ip addr:(") << m_remote_endpoint.address().to_string().c_str() << _XTEXT(",") << m_remote_endpoint.port() << _XTEXT(")") << std::endl;
 				if (m_been_opened && m_close_handler)
 				{
-					m_close_handler(m_conn_index);
+					m_close_handler();
 				}
 				return;
 			}
@@ -361,7 +354,7 @@ namespace faith
 				{
 					if (m_been_opened && m_close_handler)
 					{
-						m_close_handler(m_conn_index);
+						m_close_handler();
 					}
 				}
 				return;
@@ -534,7 +527,7 @@ namespace faith
 			for(int i = 0;i< packet_count;++i)
 			{
 				packet_data = m_recv_buf.get_head_packet(packet_size);
-				m_recv_handler(m_conn_index, packet_data, packet_size);
+				m_recv_handler(packet_data, packet_size);
 				m_recv_buf.pop_head_packet();
 			}
 			read();

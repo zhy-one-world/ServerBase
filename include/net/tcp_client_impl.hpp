@@ -46,8 +46,7 @@ namespace faith
 		private:
 			void					finish_session_close(
 				onclose_handler_type onclose_handler,
-				tcp_client_session_ptr session,
-				unsigned int conn_index);
+				tcp_client_session_ptr session);
 			tcp_client_session_ptr	create_session(
 				xstring ip,
 				xstring service_port,

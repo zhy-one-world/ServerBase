@@ -1,4 +1,4 @@
-﻿/********************************************************************
+/********************************************************************
 	created:	2014/08/19
 	created:	19:8:2014   11:01
 	file base:	tcp_server
@@ -14,6 +14,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/any.hpp>
+#include <memory>
 #include "xchar.hpp"
 #include "plugin.hpp"
 #include "datablock.hpp"
@@ -23,7 +24,11 @@ namespace faith
 	namespace net 
 	{
 		class tcp_server_impl;
+		class tcp_server_session;
+		typedef std::shared_ptr<tcp_server_session> tcp_server_session_ptr;
+		//
 		//	asynchronous TCP server facade
+		// 
 		class tcp_server : private boost::noncopyable
 		{			
 		public:
@@ -32,9 +37,9 @@ namespace faith
 				e_ss_all_connection_closed = 0xFFFFFFFF,
 			};
 			typedef boost::function<void(e_server_status_type)>				serverstatus_handler_type;
-			typedef boost::function<void(unsigned int)>						onclose_handler_type;
-			typedef boost::function<void(unsigned int)>						onconnected_handler_type;
-			typedef boost::function<void(unsigned int,const void*,size_t)>	onrecv_handler_type;
+			typedef boost::function<void(tcp_server_session_ptr)>			onclose_handler_type;
+			typedef boost::function<void(tcp_server_session_ptr)>			onconnected_handler_type;
+			typedef boost::function<void(tcp_server_session_ptr,const void*,size_t)>	onrecv_handler_type;
 			struct options
 			{
 				template<int check_sum,class value_type>
@@ -82,14 +87,13 @@ namespace faith
 			virtual ~tcp_server();
 		public:
 			std::size_t							get_conn_count( void );
-			xstring								get_ip_addr( unsigned int conn_index );
-			unsigned short						get_ip_port( unsigned int conn_index );
-			unsigned int						get_session_thread_id( unsigned int conn_index );
+			xstring								get_ip_addr( const tcp_server_session_ptr& session );
+			unsigned short						get_ip_port( const tcp_server_session_ptr& session );
+			unsigned int						get_session_thread_id( const tcp_server_session_ptr& session );
 			bool								start( void );
-			void								stop( bool wait_until_finished = false );
-			int									send( unsigned int conn_index,const void *data_ptr,size_t data_len );
-			int									send_multi(unsigned int conn_index,const datablock_queue_type& data_queue);
-			bool								close( unsigned int conn_index );
+			int									send( const tcp_server_session_ptr& session,const void *data_ptr,size_t data_len );
+			int									send_multi(const tcp_server_session_ptr& session,const datablock_queue_type& data_queue);
+			bool								close( const tcp_server_session_ptr& session );
 			bool								set_option(const boost::any& option_item);
 			bool								get_option(boost::any& option_item);
 			template<class option_type>

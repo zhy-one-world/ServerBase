@@ -60,7 +60,7 @@ namespace faith
 				tcp_client::onrecv_handler_type user_handler;
 				tcp_client_session_ptr session;
 
-				void on_recv(unsigned int, const void* data_ptr, size_t data_len) const
+				void on_recv(const void* data_ptr, size_t data_len) const
 				{
 					if (session)
 					{
@@ -191,10 +191,8 @@ namespace faith
 
 		void tcp_client_impl::finish_session_close(
 			onclose_handler_type onclose_handler,
-			tcp_client_session_ptr session,
-			unsigned int conn_index)
+			tcp_client_session_ptr session)
 		{
-			(void)conn_index;
 			if (session == NULL)
 			{
 				return;
@@ -224,16 +222,14 @@ namespace faith
 			const std::shared_ptr<recv_handler_bridge> recv_bridge = std::make_shared<recv_handler_bridge>();
 			recv_bridge->user_handler = onrecv_handler;
 
-			typedef boost::function<void(unsigned int,const void*,size_t)> internal_recv_handler_type;
+			typedef boost::function<void(const void*,size_t)> internal_recv_handler_type;
 			internal_recv_handler_type wrapped_recv = boost::bind(
 				&recv_handler_bridge::on_recv,
 				recv_bridge,
 				_1,
-				_2,
-				_3);
+				_2);
 
 			tcp_client_session_ptr session_ptr = std::make_shared<tcp_client_session>(
-				tcp_client::invalid_conn_index,
 				ip,
 				service_port,
 				io,
@@ -251,7 +247,7 @@ namespace faith
 
 			recv_bridge->session = session_ptr;
 			session_ptr->set_close_handler(
-				boost::bind(&tcp_client_impl::finish_session_close, this, onclose_handler, session_ptr, _1));
+				boost::bind(&tcp_client_impl::finish_session_close, this, onclose_handler, session_ptr));
 			session_ptr->start();
 			VMPEND
 			return session_ptr;

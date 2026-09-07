@@ -20,10 +20,9 @@ namespace faith
 	{
 		class tcp_server_session : public tcp_session< tcp_server_session >
 		{
-			typedef boost::function<void(unsigned int,const void*,size_t)> recv_handler_type;
+			typedef boost::function<void(const void*,size_t)> recv_handler_type;
 		public:			
 			tcp_server_session(
-				unsigned int connindex,
 				unsigned int thread_id,
 				boost::asio::io_service &io_service,
 				recv_handler_type handler_recv,

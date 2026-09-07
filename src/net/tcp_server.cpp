@@ -1,4 +1,4 @@
-﻿/********************************************************************
+/********************************************************************
 	created:	2014/05/04
 	created:	4:5:2014   19:22
 	file base:	tcp_server
@@ -77,44 +77,39 @@ namespace faith
 			return impl_ptr->start();
 		}
 
-		void tcp_server::stop( bool wait_until_finished /*= false*/ )
-		{
-			impl_ptr->stop(wait_until_finished);
-		}
-
 		std::size_t tcp_server::get_conn_count()
 		{
 			return impl_ptr->get_conn_count();
 		}
 
-		xstring tcp_server::get_ip_addr( unsigned int conn_index )
+		xstring tcp_server::get_ip_addr( const tcp_server_session_ptr& session )
 		{
-			return impl_ptr->get_ip_addr(conn_index);
+			return impl_ptr->get_ip_addr(session);
 		}
 
-		unsigned short tcp_server::get_ip_port( unsigned int conn_index )
+		unsigned short tcp_server::get_ip_port( const tcp_server_session_ptr& session )
 		{
-			return impl_ptr->get_ip_port(conn_index);
+			return impl_ptr->get_ip_port(session);
 		}
 
-		unsigned int tcp_server::get_session_thread_id( unsigned int conn_index )
+		unsigned int tcp_server::get_session_thread_id( const tcp_server_session_ptr& session )
 		{
-			return impl_ptr->get_session_thread_id(conn_index);
+			return impl_ptr->get_session_thread_id(session);
 		}
 
-		int tcp_server::send( unsigned int conn_index,const void *data_ptr,size_t data_len )
+		int tcp_server::send( const tcp_server_session_ptr& session,const void *data_ptr,size_t data_len )
 		{
-			return impl_ptr->send(conn_index,data_ptr,data_len);
+			return impl_ptr->send(session,data_ptr,data_len);
 		}
 
-		int	tcp_server::send_multi(unsigned int conn_index,const datablock_queue_type& data_queue)
+		int	tcp_server::send_multi(const tcp_server_session_ptr& session,const datablock_queue_type& data_queue)
 		{
-			return impl_ptr->send_multi(conn_index,data_queue);
+			return impl_ptr->send_multi(session,data_queue);
 		}
 
-		bool tcp_server::close( unsigned int conn_index )
+		bool tcp_server::close( const tcp_server_session_ptr& session )
 		{
-			return impl_ptr->close(conn_index);
+			return impl_ptr->close(session);
 		}
 
 		bool tcp_server::set_option(const boost::any& option_item)
