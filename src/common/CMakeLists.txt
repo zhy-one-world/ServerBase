@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 add_definitions(-DSPDLOG_COMPILED_LIB)
 add_definitions(-D_WIN32_WINNT=0x0A00)
+add_definitions(-DTIXML_USE_STL)
 
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
 
@@ -48,8 +49,10 @@ target_include_directories(server_common PUBLIC
     ${COMMON_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/include/public
     ${CMAKE_SOURCE_DIR}/include/public/common
+    ${CMAKE_SOURCE_DIR}/include/public/common/tinyxml
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/curl
+    ${CMAKE_CURRENT_SOURCE_DIR}/tinyxml
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
