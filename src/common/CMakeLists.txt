@@ -57,8 +57,14 @@ target_include_directories(server_common PUBLIC
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/common
 )
 
-# spdlog (compiled lib from vcpkg)
+# spdlog (compiled lib from vcpkg) + redis
 target_link_libraries(server_common PUBLIC
     $<$<CONFIG:Debug>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlogd.lib>
     $<$<NOT:$<CONFIG:Debug>>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlog.lib>
+    redis++
+    hiredis
+)
+
+target_link_directories(server_common PUBLIC
+    ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib
 )
