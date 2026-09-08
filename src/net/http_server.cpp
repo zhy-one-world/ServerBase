@@ -182,8 +182,11 @@ namespace faith
 			return false;
 		}
 
-		BOOL reuse = TRUE;
-		setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&reuse), sizeof(reuse));
+		// Prefer exclusive bind on Windows so a second config_center cannot
+		// silently share :19000 (SO_REUSEADDR) and leave the debugger looking "failed".
+		BOOL exclusive = TRUE;
+		setsockopt(listen_sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+			reinterpret_cast<const char*>(&exclusive), sizeof(exclusive));
 
 		sockaddr_in addr;
 		std::memset(&addr, 0, sizeof(addr));
@@ -202,6 +205,12 @@ namespace faith
 
 		if (bind(listen_sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
 		{
+			const int bind_err = WSAGetLastError();
+			std::fprintf(stderr,
+				"http_server bind failed ip=%s port=%d wsa_error=%d\n",
+				m_options.bind_ip.c_str(),
+				m_options.port,
+				bind_err);
 			closesocket(listen_sock);
 			free_ssl_ctx();
 			return false;
