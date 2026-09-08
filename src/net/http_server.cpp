@@ -1,13 +1,33 @@
 #include "http_server.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <sstream>
 #include <vector>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <WinSock2.h>
 #include <WS2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "crypt32.lib")
+#else
+#include <arpa/inet.h>
+#include <cerrno>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -18,9 +38,6 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "crypt32.lib")
-
 namespace faith
 {
 	namespace
@@ -28,12 +45,132 @@ namespace faith
 		constexpr int k_https_read_timeout_ms = 10000;
 		constexpr std::size_t k_https_max_request = 1024 * 1024;
 
-		bool set_socket_timeout(SOCKET sock, int timeout_ms)
+#ifdef _WIN32
+		using socket_t = SOCKET;
+		constexpr socket_t k_invalid_socket = INVALID_SOCKET;
+
+		void close_socket(socket_t sock)
+		{
+			if (sock != k_invalid_socket)
+			{
+				closesocket(sock);
+			}
+		}
+
+		int last_socket_error()
+		{
+			return WSAGetLastError();
+		}
+
+		bool ensure_socket_runtime()
+		{
+			static bool ready = false;
+			static bool ok = false;
+			if (!ready)
+			{
+				WSADATA wsa;
+				ok = (WSAStartup(MAKEWORD(2, 2), &wsa) == 0);
+				ready = true;
+			}
+			return ok;
+		}
+
+		bool set_exclusive_bind(socket_t sock)
+		{
+			BOOL exclusive = TRUE;
+			return setsockopt(
+				sock,
+				SOL_SOCKET,
+				SO_EXCLUSIVEADDRUSE,
+				reinterpret_cast<const char*>(&exclusive),
+				sizeof(exclusive)) == 0;
+		}
+
+		bool set_socket_timeout(socket_t sock, int timeout_ms)
 		{
 			return setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
-				reinterpret_cast<const char*>(&timeout_ms), sizeof(timeout_ms)) == 0
+					reinterpret_cast<const char*>(&timeout_ms), sizeof(timeout_ms)) == 0
 				&& setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,
 					reinterpret_cast<const char*>(&timeout_ms), sizeof(timeout_ms)) == 0;
+		}
+
+		using socklen_type = int;
+
+		int select_readable(socket_t sock, timeval* tv)
+		{
+			fd_set read_set;
+			FD_ZERO(&read_set);
+			FD_SET(sock, &read_set);
+			return select(0, &read_set, nullptr, nullptr, tv);
+		}
+#else
+		using socket_t = int;
+		constexpr socket_t k_invalid_socket = -1;
+
+		void close_socket(socket_t sock)
+		{
+			if (sock != k_invalid_socket)
+			{
+				::close(sock);
+			}
+		}
+
+		int last_socket_error()
+		{
+			return errno;
+		}
+
+		bool ensure_socket_runtime()
+		{
+			return true;
+		}
+
+		bool set_exclusive_bind(socket_t sock)
+		{
+			// Linux default bind is exclusive for the same address/port.
+			// Explicitly disable SO_REUSEADDR so a second process fails clearly.
+			const int reuse = 0;
+			return setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == 0;
+		}
+
+		bool set_socket_timeout(socket_t sock, int timeout_ms)
+		{
+			timeval tv;
+			tv.tv_sec = timeout_ms / 1000;
+			tv.tv_usec = (timeout_ms % 1000) * 1000;
+			return setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == 0
+				&& setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) == 0;
+		}
+
+		using socklen_type = socklen_t;
+
+		int select_readable(socket_t sock, timeval* tv)
+		{
+			fd_set read_set;
+			FD_ZERO(&read_set);
+			FD_SET(sock, &read_set);
+			return select(sock + 1, &read_set, nullptr, nullptr, tv);
+		}
+#endif
+
+		bool parse_ipv4(const std::string& ip, in_addr& out)
+		{
+#ifdef _WIN32
+			return InetPtonA(AF_INET, ip.c_str(), &out) == 1;
+#else
+			return inet_pton(AF_INET, ip.c_str(), &out) == 1;
+#endif
+		}
+
+		std::string format_ipv4(const in_addr& addr)
+		{
+			char ip_buf[INET_ADDRSTRLEN] = { 0 };
+#ifdef _WIN32
+			InetNtopA(AF_INET, &addr, ip_buf, sizeof(ip_buf));
+#else
+			inet_ntop(AF_INET, &addr, ip_buf, sizeof(ip_buf));
+#endif
+			return ip_buf;
 		}
 
 		std::string status_reason(int status)
@@ -166,8 +303,10 @@ namespace faith
 
 	bool http_server::start_https()
 	{
-		WSADATA wsa;
-		WSAStartup(MAKEWORD(2, 2), &wsa);
+		if (!ensure_socket_runtime())
+		{
+			return false;
+		}
 
 		if (!load_ssl_ctx())
 		{
@@ -175,49 +314,46 @@ namespace faith
 			return false;
 		}
 
-		SOCKET listen_sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (listen_sock == INVALID_SOCKET)
+		socket_t listen_sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (listen_sock == k_invalid_socket)
 		{
 			free_ssl_ctx();
 			return false;
 		}
 
-		// Prefer exclusive bind on Windows so a second config_center cannot
-		// silently share :19000 (SO_REUSEADDR) and leave the debugger looking "failed".
-		BOOL exclusive = TRUE;
-		setsockopt(listen_sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
-			reinterpret_cast<const char*>(&exclusive), sizeof(exclusive));
+		// Fail clearly if another process already owns the port.
+		set_exclusive_bind(listen_sock);
 
 		sockaddr_in addr;
 		std::memset(&addr, 0, sizeof(addr));
 		addr.sin_family = AF_INET;
-		addr.sin_port = htons(static_cast<u_short>(m_options.port));
+		addr.sin_port = htons(static_cast<std::uint16_t>(m_options.port));
 		if (m_options.bind_ip == "0.0.0.0" || m_options.bind_ip.empty())
 		{
 			addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		}
-		else if (InetPtonA(AF_INET, m_options.bind_ip.c_str(), &addr.sin_addr) != 1)
+		else if (!parse_ipv4(m_options.bind_ip, addr.sin_addr))
 		{
-			closesocket(listen_sock);
+			close_socket(listen_sock);
 			free_ssl_ctx();
 			return false;
 		}
 
 		if (bind(listen_sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
 		{
-			const int bind_err = WSAGetLastError();
+			const int bind_err = last_socket_error();
 			std::fprintf(stderr,
-				"http_server bind failed ip=%s port=%d wsa_error=%d\n",
+				"http_server bind failed ip=%s port=%d error=%d\n",
 				m_options.bind_ip.c_str(),
 				m_options.port,
 				bind_err);
-			closesocket(listen_sock);
+			close_socket(listen_sock);
 			free_ssl_ctx();
 			return false;
 		}
 		if (::listen(listen_sock, SOMAXCONN) != 0)
 		{
-			closesocket(listen_sock);
+			close_socket(listen_sock);
 			free_ssl_ctx();
 			return false;
 		}
@@ -423,32 +559,32 @@ namespace faith
 		}
 		if (item.socket != static_cast<std::uintptr_t>(-1))
 		{
-			closesocket(static_cast<SOCKET>(item.socket));
+			close_socket(static_cast<socket_t>(item.socket));
 			item.socket = static_cast<std::uintptr_t>(-1);
 		}
 	}
 
 	void http_server::https_loop()
 	{
-		SOCKET listen_sock = static_cast<SOCKET>(m_listen_socket);
+		socket_t listen_sock = static_cast<socket_t>(m_listen_socket);
 		while (!m_stop.load())
 		{
-			fd_set read_set;
-			FD_ZERO(&read_set);
-			FD_SET(listen_sock, &read_set);
 			timeval tv;
 			tv.tv_sec = 0;
 			tv.tv_usec = 200 * 1000;
-			const int ready = select(0, &read_set, nullptr, nullptr, &tv);
-			if (ready <= 0 || !FD_ISSET(listen_sock, &read_set))
+			const int ready = select_readable(listen_sock, &tv);
+			if (ready <= 0)
 			{
 				continue;
 			}
 
 			sockaddr_in peer;
-			int peer_len = sizeof(peer);
-			SOCKET client = accept(listen_sock, reinterpret_cast<sockaddr*>(&peer), &peer_len);
-			if (client == INVALID_SOCKET)
+			socklen_type peer_len = sizeof(peer);
+			socket_t client = accept(
+				listen_sock,
+				reinterpret_cast<sockaddr*>(&peer),
+				&peer_len);
+			if (client == k_invalid_socket)
 			{
 				continue;
 			}
@@ -457,14 +593,14 @@ namespace faith
 			SSL* ssl = SSL_new(m_ssl_ctx);
 			if (ssl == nullptr)
 			{
-				closesocket(client);
+				close_socket(client);
 				continue;
 			}
 			SSL_set_fd(ssl, static_cast<int>(client));
 			if (SSL_accept(ssl) != 1)
 			{
 				SSL_free(ssl);
-				closesocket(client);
+				close_socket(client);
 				continue;
 			}
 
@@ -473,7 +609,7 @@ namespace faith
 			{
 				SSL_shutdown(ssl);
 				SSL_free(ssl);
-				closesocket(client);
+				close_socket(client);
 				continue;
 			}
 
@@ -488,13 +624,11 @@ namespace faith
 				write_https_response(ssl, bad);
 				SSL_shutdown(ssl);
 				SSL_free(ssl);
-				closesocket(client);
+				close_socket(client);
 				continue;
 			}
 
-			char ip_buf[INET_ADDRSTRLEN] = { 0 };
-			InetNtopA(AF_INET, &peer.sin_addr, ip_buf, sizeof(ip_buf));
-			inbound.client_ip = ip_buf;
+			inbound.client_ip = format_ipv4(peer.sin_addr);
 
 			pending_inbound pending;
 			pending.is_https = true;
@@ -715,7 +849,7 @@ namespace faith
 
 		if (m_listen_socket != static_cast<std::uintptr_t>(-1))
 		{
-			closesocket(static_cast<SOCKET>(m_listen_socket));
+			close_socket(static_cast<socket_t>(m_listen_socket));
 			m_listen_socket = static_cast<std::uintptr_t>(-1);
 		}
 		free_ssl_ctx();

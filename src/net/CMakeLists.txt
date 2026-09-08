@@ -6,11 +6,13 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 32)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
+	add_definitions(-D_WIN32_WINNT=0x0601)
+endif()
 
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 add_definitions(-DSPDLOG_USE_STD_FORMAT)
-add_definitions(-D_WIN32_WINNT=0x0601)
 
 set(NET_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/net)
 
@@ -51,3 +53,6 @@ target_include_directories(server_net PUBLIC
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/include/server_base/net
 )
 
+if(UNIX AND NOT APPLE)
+	target_link_libraries(server_net PUBLIC pthread)
+endif()

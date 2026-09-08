@@ -6,11 +6,13 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 32)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /utf-8")
+	add_definitions(-D_WIN32_WINNT=0x0A00)
+endif()
 
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 add_definitions(-DSPDLOG_COMPILED_LIB)
-add_definitions(-D_WIN32_WINNT=0x0A00)
 add_definitions(-DTIXML_USE_STL)
 
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
@@ -58,12 +60,20 @@ target_include_directories(server_common PUBLIC
 )
 
 # spdlog (compiled lib from vcpkg) + redis
-target_link_libraries(server_common PUBLIC
-    $<$<CONFIG:Debug>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlogd.lib>
-    $<$<NOT:$<CONFIG:Debug>>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlog.lib>
-    redis++
-    hiredis
-)
+if(MSVC)
+	target_link_libraries(server_common PUBLIC
+		$<$<CONFIG:Debug>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlogd.lib>
+		$<$<NOT:$<CONFIG:Debug>>:${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib/spdlog.lib>
+		redis++
+		hiredis
+	)
+else()
+	target_link_libraries(server_common PUBLIC
+		spdlog
+		redis++
+		hiredis
+	)
+endif()
 
 target_link_directories(server_common PUBLIC
     ${PROJECT_COMPONENT_DIR}/../../dep/vcpkg/installed/x64-windows/lib
